@@ -8,8 +8,7 @@ import { TrackballControls } from 'trackball'
 // Clases de mi proyecto
 
 import { Suelo } from './Suelo.js'
-
- 
+import { Extrusion } from './Extrusion.js' 
 /// La clase fachada del modelo
 /**
  * Usaremos una clase derivada de la clase Scene de Three.js para llevar el control de la escena y de todo lo que ocurre en ella.
@@ -44,8 +43,10 @@ class MyScene extends THREE.Scene {
     // Por último creamos el modelo.
     // El modelo puede incluir su parte de la interfaz gráfica de usuario. Le pasamos la referencia a 
     // la gui y el texto bajo el que se agruparán los controles de la interfaz que añada el modelo.
-    this.model = new Suelo ();
+    // this.model = new Suelo ();
+    this.model = new Extrusion();
     this.add (this.model);
+    
   }
   
   createCamera () {
