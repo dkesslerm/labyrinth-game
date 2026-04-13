@@ -2,11 +2,11 @@ import * as THREE from 'three'
 import * as CSG from '../libs/three-bvh-csg.js'
 
 class Daga extends THREE.Object3D {
-  constructor() {
+  constructor(gui, titleGui) {
     super();
 
     // La GUI se crea primero porque otros métodos usan this.guiControls
-    //this.createGUI(gui, titleGui);
+    this.createGUI(gui, titleGui);
 
     // Materiales compartidos entre métodos
     // HOJA: acero pulido. Alta metalicidad, muy baja rugosidad para
