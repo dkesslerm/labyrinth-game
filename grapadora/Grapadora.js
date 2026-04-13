@@ -55,7 +55,7 @@ class Grapadora extends THREE.Object3D {
     // Estas lineas son las que añaden los componentes de la interfaz
     // Las tres cifras indican un valor mínimo, un máximo y el incremento
     folder
-      .add(this.guiControls, "rotacion", -0.125, 0.2, 0.001)
+      .add(this.guiControls, "rotacion", -0.2, 0.125, 0.001)
       .name("Apertura : ")
       .onChange((value) => this.setAngulo(-value));
   }
@@ -67,12 +67,14 @@ class Grapadora extends THREE.Object3D {
       this.material,
     );
     // cajaMovil.position.set(0, 0, 0);
-    cajaMovil.position.set(-tama * 0.45, tama * 0.06, 0);
+    cajaMovil.position.set(tama * 0.45, tama * 0.02, 0);
+    cajaMovil.rotateZ(Math.PI / 22);
+    // cajaMovil.position.set(tama * 0.45, tama * 0.06, 0);
 
-    var movil = new THREE.Object3D();
+    var movil = new THREE.Group();
     // IMPORTANTE: Con independencia del orden en el que se escriban las 2 líneas siguientes, SIEMPRE se aplica primero la rotación y después la traslación. Prueba a intercambiar las dos líneas siguientes y verás que no se produce ningún cambio al ejecutar.
     movil.rotation.z = this.guiControls.rotacion;
-    movil.position.set(tama * 0.45, tama * 0.2, 0);
+    movil.position.set(-tama * 0.45, tama * 0.2, 0);
     movil.add(cajaMovil);
     return movil;
   }
