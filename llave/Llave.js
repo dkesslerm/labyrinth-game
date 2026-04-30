@@ -11,7 +11,7 @@ class Llave extends THREE.Object3D {
     // Materiales: uno para el cuerpo de la llave y otro para la gema
     this.materialLlave = new THREE.MeshStandardMaterial({ color: this.guiControls.colorLlave });
     this.materialGema  = new THREE.MeshPhysicalMaterial({
-        color: 0x9ad8c1,
+        color: this.guiControls.colorGema,
         roughness: 0.04,
         metalness: 0.0,
         transmission: 0.9,
@@ -34,7 +34,7 @@ class Llave extends THREE.Object3D {
   createGUI(gui, titleGui) {
     this.guiControls = {
       colorLlave : '#D4A843',   // dorado
-      colorGema  : '#E88FA0'    // rosa
+      colorGema  : '#9AD8C1'    // rosa
     };
 
     var folder = gui.addFolder(titleGui);
@@ -51,7 +51,7 @@ class Llave extends THREE.Object3D {
   // ─────────────────────────────────────────────────────────────────────────
   // SHAPE DE LA LLAVE  (plano XY, se extruirá en Z)
   //
-  // Descripción del contorno (unidades en metros, escala ~15 cm de largo):
+  // Descripción del contorno:
   //
   //   · Cabeza circular: círculo de radio R centrado en el origen
   //   · Agujero central de la cabeza: círculo interior (hole)
@@ -159,13 +159,13 @@ class Llave extends THREE.Object3D {
     ];
 
     // LatheGeometry: perfil, segmentos de revolución, ángulo inicio, ángulo total
-    var geoGema = new THREE.LatheGeometry(puntos, 8, 0, Math.PI * 2);
+    var geoGema = new THREE.LatheGeometry(puntos, 128, 0, Math.PI * 2);
 
     return geoGema;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // LLAVE COMPLETA  (CSG: incrustar la gema en el centro de la cabeza)
+  // LLAVE COMPLETA  (CSG)
   //
   // Operaciones:
   //   1. cuerpoLlave − hueco  →  llave con cavidad  (SUBTRACTION)
@@ -175,7 +175,6 @@ class Llave extends THREE.Object3D {
   // que encaje embutida (la gema sobresale un poco por delante y por detrás).
   // ─────────────────────────────────────────────────────────────────────────
   createLlave() {
-    var profLlave = 0.013;   // debe coincidir con depth de ExtrudeGeometry
 
     // ── Geometrías ────────────────────────────────────────────────────────
     var geoCuerpo = this.createCuerpoLlave();
@@ -186,14 +185,6 @@ class Llave extends THREE.Object3D {
     var geoHueco = new THREE.SphereGeometry(rHueco, 24, 24);
 
     // ── Posicionado de geometrías (antes de crear los Brush) ──────────────
-    // El PDF insiste en que las transformaciones sobre geometría se aplican
-    // en el ORDEN EN QUE SE ESCRIBEN y antes de construir el Mesh/Brush.
-
-    // La gema: centrada en el origen del plano de la cabeza (0, 0),
-    // y centrada en Z respecto al grosor de la llave.
-    // La LatheGeometry ya está centrada en XZ; solo hay que centrarla en Y.
-    // El radio de revolución es Y, así que la rotamos 90° en X para
-    // que el eje de revolución quede alineado con Z (perpendicular a la llave).
     geoGema.rotateX(Math.PI / 2);
     // Ahora el eje de simetría de la gema apunta en Z, igual que la extrusión.
     // La dejamos centrada en Z=0 (ya lo está tras la rotación).
@@ -208,18 +199,14 @@ class Llave extends THREE.Object3D {
 
     // ── Operaciones CSG ───────────────────────────────────────────────────
     var evaluador = new CSG.Evaluator();
-
-    // Paso 1: hacer la cavidad en el cuerpo de la llave
     var llaveConCavidad = evaluador.evaluate(brushCuerpo, brushHueco, CSG.SUBTRACTION);
-
-    // Paso 2: unir la llave con cavidad y la gema
     var llavaFinal = evaluador.evaluate(llaveConCavidad, brushGema, CSG.ADDITION);
 
     return llavaFinal;
   }
 
   update() {
-    // Sin animación propia; los cambios se gestionan desde la GUI
+    // Sin animación propia;
   }
 }
 

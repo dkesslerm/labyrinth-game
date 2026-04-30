@@ -107,91 +107,22 @@ class Daga extends THREE.Object3D {
       pomoRadio : 0.016,
 
       // Cuerda
-      cuerdaRadio  : 0.004,   // grosor de la sección de la cuerda
-      cuerdaVueltas: 9,        // número de vueltas alrededor del mango
+      cuerdaRadio  : 0.002,   // grosor de la sección de la cuerda
+      cuerdaVueltas: 20,        // número de vueltas alrededor del mango
     };
   }
 
-  // ── HOJA (CSG) ───────────────────────────────────────────────────────────
-  //
-  // Construcción:
-  //   1. Caja base larga y delgada (el bloque de la hoja)
-  //   2. Se restan dos cajas rotadas, una por cada lado, para crear
-  //      el bisel que afila la hoja y forma la punta triangular.
-  //
-  //   hoja = cajaBase − biselIzq − biselDer   (SUBTRACTION x2)
-  //
-  // La hoja se crea con su base (el talón) en y = 0 y la punta en y = hojaAlto.
-  // ──────────────────────────────────────────────────────────────────────────
   // ── HOJA (geometría manual con BufferGeometry) ───────────────────────────
   //
   // La hoja se construye como una pirámide de BASE HEXAGONAL.
-  // El hexágono no es regular: tiene la forma de la sección de una hoja
-  // real vista desde abajo (el talón).
-  //
-  // Vista desde abajo (plano XZ, y = 0):
-  //
-  //            lomo
-  //      v0────────────v1
-  //     /   z = +g/2    \
-  //   v5                 v2      ← z = 0, extremos del ancho
-  //     \   z = -g/2    /
-  //      v4────────────v3
-  //            filo
-  //
-  //   |←────── w ────────→|   (ancho total, eje X)
-  //   |←  g  →|               (grosor, eje Z, lados cortos v0v1 y v3v4)
-  //
-  // Los 6 vértices de la base están en y = 0.
-  // El vértice 6 (P) es la punta: x=0, y=h, z=0.
-  //
-  // Caras:
-  //   Base hexagonal   → 4 triángulos (abanico desde v0)
-  //   Lomo  (v0→v1→P) → 1 triángulo
-  //   Canto derecho    (v1→v2→P) → 1 triángulo
-  //   Filo  (v2→v3→P) → 1 triángulo  ← el filo real (más largo)
-  //   Filo  (v3→v4→P) → 1 triángulo
-  //   Canto izquierdo  (v4→v5→P) → 1 triángulo
-  //   Lomo  (v5→v0→P) → 1 triángulo
-  //
-  // El índice de las caras laterales sigue el orden antihorario visto
-  // desde el exterior (normals apuntando hacia fuera), igual que en el
-  // ejemplo de la pirámide del PDF (diap. 26).
+  // El hexágono no es regular
   // ──────────────────────────────────────────────────────────────────────────
   createGeoHoja(dims) {
     var h = dims.hojaAlto;
     var w = dims.hojaAncho;
     var g = dims.hojaGrosor;
  
-    // Vértices y caras siguiendo exactamente el formato del PDF (diap. 26):
-    //   · vertices: array plano, cada 3 valores = un vértice (x, y, z)
-    //   · indices:  array plano, cada 3 valores = un triángulo
-    //
-    // Los 7 vértices definen una pirámide de base hexagonal:
-    //
-    // Vista desde abajo (plano XZ, y = 0):
-    //
-    //         lomo
-    //   v0──────────v1         z = +g/2
-    //  /              \
-    // v5               v2      z = 0  (extremos del ancho)
-    //  \              /
-    //   v4──────────v3         z = -g/2
-    //         filo
-    //
-    //   |←──── w ────→|   (eje X)
-    //   |←  g →|           (eje Z, lados cortos)
-    //
-    // v6 = punta (0, h, 0)
-    //
-    // v0: lomo izq    (-g/2, 0, +g/2)
-    // v1: lomo der    (+g/2, 0, +g/2)
-    // v2: extremo der (+w/2, 0,    0)
-    // v3: filo der    (+g/2, 0, -g/2)
-    // v4: filo izq    (-g/2, 0, -g/2)
-    // v5: extremo izq (-w/2, 0,    0)
-    // v6: PUNTA       (   0, h,    0)
- 
+    
     var vertices = new Float32Array([
       // x       y    z
       -g/2,     0,   g/2,   // v0 lomo izq
@@ -203,6 +134,14 @@ class Daga extends THREE.Object3D {
          0,     h,     0    // v6 punta
     ]);
 
+    //Caras:
+    //   Base hexagonal   → 4 triángulos (abanico desde v0)
+    //   Lomo  (v0→v1→P) → 1 triángulo
+    //   Canto derecho    (v1→v2→P) → 1 triángulo
+    //   Filo  (v2→v3→P) → 1 triángulo  ← el filo real (más largo)
+    //   Filo  (v3→v4→P) → 1 triángulo
+    //   Canto izquierdo  (v4→v5→P) → 1 triángulo
+    //   Lomo  (v5→v0→P) → 1 triángulo
     var indices = [
       // Base hexagonal: 4 triángulos en abanico desde v0
       0, 2, 1,
@@ -233,7 +172,6 @@ class Daga extends THREE.Object3D {
   // Se crea centrada en y = 0; luego se posicionará con translate.
   createGeoGuarda(dims) {
     var geo = new THREE.BoxGeometry(dims.guardaAncho, dims.guardaAlto, dims.guardaGrosor);
-    // Bisel suave en los bordes para que no parezca tan brusca
     return new THREE.Mesh(geo, this.materialGuarda);
   }
 
@@ -263,20 +201,13 @@ class Daga extends THREE.Object3D {
 
   // ── CUERDA ENROLLADA (barrido) ───────────────────────────────────────────
   //
-  // Según el PDF (diap. 39-42), el barrido usa ExtrudeGeometry con:
+  // Para el barrido se usa ExtrudeGeometry con:
   //   · shape:       sección transversal de la cuerda (círculo pequeño)
   //   · extrudePath: CatmullRomCurve3 que describe la trayectoria
-  //
-  // La trayectoria es una HÉLICE generada proceduralmente:
-  //   x(t) = r · cos(t)
-  //   z(t) = r · sin(t)
-  //   y(t) = yInicio + altura · (t / (2π · vueltas))
   //
   // El radio de la hélice = radio del mango + radio de la cuerda
   // para que la cuerda apoye en la superficie del mango.
   //
-  // Nota del PDF (diap. 42): a veces Three.js no barre el shape con la
-  // orientación deseada. Usamos rotateShape para corregirlo si hace falta.
   // ──────────────────────────────────────────────────────────────────────────
   createCuerda(dims) {
     var rMango   = dims.mangoAncho / 2;
@@ -328,7 +259,7 @@ class Daga extends THREE.Object3D {
   // ── ENSAMBLAJE COMPLETO CON CSG ──────────────────────────────────────────
   //
   // Cada pieza se posiciona con translate/rotateX sobre su geometría
-  // ANTES de entrar en el CSG (PDF diap. 29).
+  // ANTES de entrar en el CSG
   //
   // Layout en Y (de arriba a abajo):
   //
