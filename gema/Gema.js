@@ -42,7 +42,7 @@ class Gema extends THREE.Object3D {
     });
 
     this.matPiedra = new THREE.MeshStandardMaterial({
-      color:     0x2a1f14,
+      color:     0x5e452d,
       roughness: 0.95,
       metalness: 0.0,
     });
@@ -184,7 +184,7 @@ class Gema extends THREE.Object3D {
 
   createBase() {
     const grupo = new THREE.Object3D();
-    const mesh  = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.5), this.matPiedra);
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.5), this.matPiedra);
     mesh.position.set(0, -0.2, 0);
     grupo.add(mesh);
     return grupo;

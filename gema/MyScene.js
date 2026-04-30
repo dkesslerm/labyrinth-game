@@ -188,7 +188,7 @@ class MyScene extends THREE.Scene {
     renderer.setClearColor(new THREE.Color(0xeeeeee), 1.0);
 
     // Se establece el tamaño, se aprovecha la totalidad de la ventana del navegador
-    renderer.setSize(window.innerWidth, window.);
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
     // La visualización se muestra en el lienzo recibido
     $(myCanvas).append(renderer.domElement);
