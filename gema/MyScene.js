@@ -63,7 +63,7 @@ class MyScene extends THREE.Scene {
       10,
     );
     // También se indica dónde se coloca
-    this.camera.position.set(0.2, 0.05, 0.2);
+    this.camera.position.set(0.7, 0.3, 0.7);
     // Y hacia dónde mira
     var look = new THREE.Vector3(0, 0, 0);
     this.camera.lookAt(look);
@@ -188,7 +188,7 @@ class MyScene extends THREE.Scene {
     renderer.setClearColor(new THREE.Color(0xeeeeee), 1.0);
 
     // Se establece el tamaño, se aprovecha la totalidad de la ventana del navegador
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth, window.);
 
     // La visualización se muestra en el lienzo recibido
     $(myCanvas).append(renderer.domElement);
