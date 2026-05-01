@@ -53,7 +53,7 @@ class Gema extends THREE.Object3D {
 
     this.add(this.createCristalCentral());
     this.add(this.createCristalesSecundarios());
-    this.add(this.createBase());
+    this.add(this.createBase()); // hacer cambios, algo por revolución?
   }
 
   createGUI(gui, titleGui) {

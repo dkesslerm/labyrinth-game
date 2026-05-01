@@ -61,6 +61,7 @@ class Cascos extends THREE.Object3D {
     this.add(t2);
 
     this.add(hb);
+    this.translateX(-0.05);
   }
 
   createGUI(gui, titleGui) {
