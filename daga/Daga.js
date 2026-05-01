@@ -134,6 +134,7 @@ class Daga extends THREE.Object3D {
          0,     h,     0    // v6 punta
     ]);
 
+    
     //Caras:
     //   Base hexagonal   → 4 triángulos (abanico desde v0)
     //   Lomo  (v0→v1→P) → 1 triángulo

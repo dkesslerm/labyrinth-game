@@ -166,13 +166,6 @@ class Llave extends THREE.Object3D {
 
   // ─────────────────────────────────────────────────────────────────────────
   // LLAVE COMPLETA  (CSG)
-  //
-  // Operaciones:
-  //   1. cuerpoLlave − hueco  →  llave con cavidad  (SUBTRACTION)
-  //   2. llaveConCavidad ∪ gema  →  resultado final  (ADDITION)
-  //
-  // El "hueco" es una esfera ligeramente más grande que la gema para
-  // que encaje embutida (la gema sobresale un poco por delante y por detrás).
   // ─────────────────────────────────────────────────────────────────────────
   createLlave() {
 
