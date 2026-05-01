@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Juego</title>
+    <meta charset="utf-8">
+    <script type="text/javascript" src="../libs/jquery.js"></script>
+
+    <script type="importmap">
+          { "imports": { "three":      "../libs/three.module.js" ,
+                         "gui":        "../libs/dat.gui.module.js" ,
+                         "trackball" : "../libs/TrackballControls.js"} }
+    </script>
+    
+    <script type="module" src="./MyScene.js"></script>    
+    <style>
+        body { margin: 0; overflow: hidden; background: #111; }
+      #Messages {
+        position: absolute; left: 50%; top: 10px;
+        transform: translateX(-50%);
+        color: #FFD700; text-align: center;
+        font-family: serif;
+        text-shadow: 2px 2px 4px #000;
+        pointer-events: none;
+      }
+      #crosshair {
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        color: rgba(255,255,255,0.7); font-size: 20px;
+        pointer-events: none; user-select: none;
+      }
+      #instrucciones {
+        position: absolute; bottom: 20px; left: 20px;
+        color: rgba(255,220,150,0.8); font-family: serif;
+        font-size: 13px; pointer-events: none; line-height: 1.6;
+      }
+    </style>
+</head>
+<body>
+    <div id="WebGL-output"></div>
+    <div id="Messages"></div>
+    <div id="crosshair">+</div>
+    <div id="instrucciones">
+      <b>Click</b> → capturar ratón para mirar<br>
+      <b>W A S D</b> → moverse · <b>Escape</b> → liberar ratón<br>
+      <b>Click</b> → recoger objeto / abrir puerta
+    </div>
+</body>
+</html>
