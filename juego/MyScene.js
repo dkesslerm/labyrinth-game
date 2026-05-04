@@ -497,67 +497,140 @@ class MyScene extends THREE.Scene {
   // ── MOVIMIENTO DEL JUGADOR ────────────────────────────────────────────────────
   // Velocidad independiente del ordenador: e = v · Δt
   // Colisiones con Raycaster
+  // moverJugador() {
+  //   if (!this.controls.isLocked) return;
+ 
+  //   // Δt en segundos desde el último frame
+  //   var dt = this.reloj.getDelta();
+ 
+  //   // Obtenemos la dirección en la que mira el jugador
+  //   // Reutilizamos this.dirMirada para no crear objetos en cada frame
+  //   this.controls.getDirection(this.dirMirada);
+  //   this.dirMirada.y = 0;        // sin componente vertical → no volar
+  //   this.dirMirada.normalize();
+ 
+  //   // Calculamos el desplazamiento deseado
+  //   var avance  = 0;
+  //   var lateral = 0;
+  //   if (this.teclas.w) avance  += this.velocidad * dt;
+  //   if (this.teclas.s) avance  -= this.velocidad * dt;
+  //   if (this.teclas.a) lateral -= this.velocidad * dt;
+  //   if (this.teclas.d) lateral += this.velocidad * dt;
+ 
+  //   // ── Detección de colisiones por raycasting ────────
+  //   // Lanzamos un rayo en la dirección de movimiento antes de moverse.
+  //   // Si el rayo impacta con una pared dentro de la distancia de seguridad,
+  //   // no se mueve en esa dirección.
+  //   this.camera.getWorldPosition(this.posJugador);
+ 
+  //   if (avance !== 0) {
+  //     // Rayo hacia delante/atrás
+  //     var dirAvance = this.dirMirada.clone().multiplyScalar(Math.sign(avance));
+  //     this.raycaster.set(this.posJugador, dirAvance);
+  //     this.raycaster.far = 0.5;   // distancia de seguridad = 50cm
+  //     var impactosAvance = this.raycaster.intersectObjects(
+  //       this.laberinto.getParedes().map(p => p.mesh), false
+  //     );
+  //     if (impactosAvance.length === 0) {
+  //       this.controls.moveForward(avance);
+  //     }
+  //   }
+ 
+  //   if (lateral !== 0) {
+  //     // Vector lateral: perpendicular a la dirección de mirada
+  //     var dirLateral = new THREE.Vector3();
+  //     dirLateral.crossVectors(this.dirMirada, new THREE.Vector3(0, 1, 0)).normalize();
+  //     var dirRayo = dirLateral.clone().multiplyScalar(Math.sign(lateral));
+  //     this.raycaster.set(this.posJugador, dirRayo);
+  //     this.raycaster.far = 0.5;
+  //     var impactosLateral = this.raycaster.intersectObjects(
+  //       this.laberinto.getParedes().map(p => p.mesh), true
+  //     );
+  //     if (impactosLateral.length === 0) {
+  //       this.camera.position.addScaledVector(dirLateral, lateral);
+  //     }
+  //   }
+ 
+  //   // Restauramos far del raycaster para el picking
+  //   this.raycaster.far = 2.5;
+ 
+  //   // Mantenemos la altura fija a 1.75m
+  //   this.camera.position.y = 1.75;
+  // }
+  
   moverJugador() {
     if (!this.controls.isLocked) return;
- 
-    // Δt en segundos desde el último frame
+  
     var dt = this.reloj.getDelta();
- 
-    // Obtenemos la dirección en la que mira el jugador 
-    // Reutilizamos this.dirMirada para no crear objetos en cada frame
+  
+    // Dirección de mirada horizontal robusta.
+    // No usamos directamente getDirection().y = 0 porque si miras
+    // completamente arriba/abajo puede quedar vector casi nulo.
     this.controls.getDirection(this.dirMirada);
-    this.dirMirada.y = 0;        // sin componente vertical → no volar
-    this.dirMirada.normalize();
- 
-    // Calculamos el desplazamiento deseado
-    var avance  = 0;
+  
+    var dirHorizontal = new THREE.Vector3(
+      this.dirMirada.x,
+      0,
+      this.dirMirada.z
+    );
+  
+    if (dirHorizontal.lengthSq() < 0.000001) {
+      // Si estás mirando casi perfectamente hacia arriba/abajo,
+      // usamos la orientación horizontal de la cámara.
+      dirHorizontal.set(0, 0, -1);
+      dirHorizontal.applyQuaternion(this.camera.quaternion);
+      dirHorizontal.y = 0;
+    }
+  
+    dirHorizontal.normalize();
+  
+    var dirLateral = new THREE.Vector3()
+      .crossVectors(dirHorizontal, new THREE.Vector3(0, 1, 0))
+      .normalize();
+  
+    var avance = 0;
     var lateral = 0;
+  
     if (this.teclas.w) avance  += this.velocidad * dt;
     if (this.teclas.s) avance  -= this.velocidad * dt;
     if (this.teclas.a) lateral -= this.velocidad * dt;
     if (this.teclas.d) lateral += this.velocidad * dt;
- 
-    // ── Detección de colisiones por raycasting ────────
-    // Lanzamos un rayo en la dirección de movimiento antes de moverse.
-    // Si el rayo impacta con una pared dentro de la distancia de seguridad,
-    // no se mueve en esa dirección.
-    this.camera.getWorldPosition(this.posJugador);
- 
+  
+    var radioJugador = 0.32;
+  
+    // Movimiento por ejes separados: permite deslizarse por paredes
+    // en vez de quedarse bloqueado completamente.
+    var nuevaX = this.camera.position.x;
+    var nuevaZ = this.camera.position.z;
+  
+    // Avance / retroceso
     if (avance !== 0) {
-      // Rayo hacia delante/atrás
-      var dirAvance = this.dirMirada.clone().multiplyScalar(Math.sign(avance));
-      this.raycaster.set(this.posJugador, dirAvance);
-      this.raycaster.far = 0.5;   // distancia de seguridad = 50cm
-      var impactosAvance = this.raycaster.intersectObjects(
-        this.laberinto.getParedes().map(p => p.mesh), false
-      );
-      if (impactosAvance.length === 0) {
-        this.controls.moveForward(avance);
+      var xAvance = nuevaX + dirHorizontal.x * avance;
+      var zAvance = nuevaZ + dirHorizontal.z * avance;
+  
+      if (!this.laberinto.hayColision(xAvance, zAvance, radioJugador)) {
+        nuevaX = xAvance;
+        nuevaZ = zAvance;
       }
     }
- 
+  
+    // Movimiento lateral
     if (lateral !== 0) {
-      // Vector lateral: perpendicular a la dirección de mirada
-      var dirLateral = new THREE.Vector3();
-      dirLateral.crossVectors(this.dirMirada, new THREE.Vector3(0, 1, 0)).normalize();
-      var dirRayo = dirLateral.clone().multiplyScalar(Math.sign(lateral));
-      this.raycaster.set(this.posJugador, dirRayo);
-      this.raycaster.far = 0.5;
-      var impactosLateral = this.raycaster.intersectObjects(
-        this.laberinto.getParedes().map(p => p.mesh), true
-      );
-      if (impactosLateral.length === 0) {
-        this.camera.position.addScaledVector(dirLateral, lateral);
+      var xLateral = nuevaX + dirLateral.x * lateral;
+      var zLateral = nuevaZ + dirLateral.z * lateral;
+  
+      if (!this.laberinto.hayColision(xLateral, zLateral, radioJugador)) {
+        nuevaX = xLateral;
+        nuevaZ = zLateral;
       }
     }
- 
-    // Restauramos far del raycaster para el picking
-    this.raycaster.far = 2.5;
- 
-    // Mantenemos la altura fija a 1.75m
+  
+    this.camera.position.x = nuevaX;
+    this.camera.position.z = nuevaZ;
     this.camera.position.y = 1.75;
   }
- 
+
+  
   // ── RENDERIZADO CON VIEWPORTS  ───────────────────────────────
   // Método reutilizable para renderizar una cámara en un viewport concreto.
   // left, top, width, height toman valores entre 0 y 1 (proporciones de pantalla)
