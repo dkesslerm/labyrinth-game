@@ -6,8 +6,13 @@ import { GUI } from "gui";
 import { PointerLockControls } from '../libs/PointerLockControls.js'
 import * as TWEEN from '../libs/tween.esm.js'
  
-import { Laberinto } from './laberinto.js'
-import { Puerta    } from './puerta.js'
+import { Laberinto  } from './laberinto.js'
+import { Puerta     } from './puerta.js'
+import { Llave      } from './Llave.js'
+import { Daga       } from './Daga.js'
+import { Escarabajo } from './Escarabajo.js'
+import { Sombrero   } from './Sombrero.js'
+import { Gema       } from './Gema.js'
 
 /// La clase fachada del modelo
 /**
@@ -57,14 +62,19 @@ class MyScene extends THREE.Scene {
 
     // ── Pick-ups: Cada entrada: { objeto: Object3D, recogido: false }
     this.pickups = [];
+    this.inventario = {
+      daga: false,
+      escarabajo: false,
+      sombrero: false,
+      gema: false,
+      llave: false,
+    };
     
-    //var llave = new Llave();
-    //llave.position.set(x, 0, z);
-    //this.add(llave);
-    //this.pickups.push({ objeto: llave, recogido: false });
+    // Estado del juego
+    this.todosRecogidos = false;
     
-    //EStado del juego
-    this.todosRecogidos = true;
+    this.crearInventario();
+    this.crearPickups();
 
     // Estado de las teclas
     this.teclas = { w: false, s: false, a: false, d: false };
@@ -142,7 +152,7 @@ class MyScene extends THREE.Scene {
     // En este caso la intensidad de la luz y si se muestran o no los ejes
     this.guiControls = {
       luzAmbiente : 1.5,
-      luzFocal    : 300,
+      luzFocal    : 100,
     };
  
     var folder = gui.addFolder('Iluminación');
@@ -181,6 +191,162 @@ class MyScene extends THREE.Scene {
     this.spotLight.target.position.set(0, 0, -1);
 
     //se añaden en la createCamera() para que se muevan con ella
+  }
+
+  // ── CREACIÓN DE PICKUPS ──────────────────────────────────────────────────────
+  crearPickups() {
+    // Coordenadas en el mapa del laberinto: fila, columna.
+    // Todas estas celdas son pasillos accesibles según tu mapa actual.
+    const configs = [
+      {
+        id: 'daga',
+        nombre: 'Daga',
+        icono: '🗡️',
+        Clase: Daga,
+        fila: 1,
+        col: 3,
+        escala: 2.0,
+        rotY: Math.PI * 0.25,
+      },
+      {
+        id: 'escarabajo',
+        nombre: 'Escarabajo',
+        icono: '🪲',
+        Clase: Escarabajo,
+        fila: 5,
+        col: 6,
+        escala: 2.2,
+        rotY: Math.PI,
+      },
+      {
+        id: 'sombrero',
+        nombre: 'Sombrero',
+        icono: '🎩',
+        Clase: Sombrero,
+        fila: 3,
+        col: 1,
+        escala: 1.2,
+        rotY: Math.PI * 0.5,
+      },
+      {
+        id: 'gema',
+        nombre: 'Gema',
+        icono: '💎',
+        Clase: Gema,
+        fila: 7,
+        col: 5,
+        escala: 1.4,
+        rotY: 0,
+      },
+      {
+        id: 'llave',
+        nombre: 'Llave',
+        icono: '🔑',
+        Clase: Llave,
+        fila: 8,
+        col: 8,
+        escala: 3.0,
+        rotY: Math.PI * 0.5,
+      },
+    ];
+  
+    configs.forEach((cfg) => {
+      this.crearPickup(cfg);
+    });
+  
+    this.actualizarInventario();
+  }
+  
+  crearPickup(cfg) {
+    const pos = this.laberinto.celdaAMundo(cfg.fila, cfg.col);
+  
+    // Asumo que tus clases aceptan (gui, titleGui), como Puerta y Llave.
+    // Si alguna clase no usa esos parámetros, no pasa nada.
+    const objeto = new cfg.Clase(this.gui, cfg.nombre);
+  
+    objeto.position.set(pos.x, 0.35, pos.z);
+    objeto.rotation.y = cfg.rotY || 0;
+    objeto.scale.setScalar(cfg.escala || 1);
+  
+    // Marcamos la raíz del pickup.
+    objeto.userData.esPickup = true;
+    objeto.userData.pickupId = cfg.id;
+  
+    // Marcamos también todos los hijos para que el raycaster pueda
+    // encontrar el pickup aunque se haga click sobre una pieza interna.
+    objeto.traverse((nodo) => {
+      nodo.userData.esPickup = true;
+      nodo.userData.pickupId = cfg.id;
+      nodo.userData.pickupRoot = objeto;
+    });
+  
+    this.add(objeto);
+  
+    this.pickups.push({
+      id: cfg.id,
+      nombre: cfg.nombre,
+      icono: cfg.icono,
+      objeto: objeto,
+      recogido: false,
+    });
+  }
+
+  // ── INVENTARIO ───────────────────────────────────────────────────────────────
+  crearInventario() {
+    let contenedor = document.getElementById('Inventario');
+  
+    if (!contenedor) {
+      contenedor = document.createElement('div');
+      contenedor.id = 'Inventario';
+      document.body.appendChild(contenedor);
+    }
+  
+    contenedor.style.position = 'absolute';
+    contenedor.style.left = '20px';
+    contenedor.style.bottom = '20px';
+    contenedor.style.padding = '12px';
+    contenedor.style.border = '2px solid #D4A017';
+    contenedor.style.borderRadius = '10px';
+    contenedor.style.background = 'rgba(20, 14, 6, 0.78)';
+    contenedor.style.color = '#F5E6B8';
+    contenedor.style.fontFamily = 'serif';
+    contenedor.style.zIndex = '1000';
+    contenedor.style.minWidth = '220px';
+    contenedor.style.pointerEvents = 'none';
+  
+    this.elemInventario = contenedor;
+  }
+  
+  actualizarInventario() {
+    if (!this.elemInventario) return;
+  
+    const items = [
+      { id: 'daga', nombre: 'Daga', icono: '🗡️' },
+      { id: 'escarabajo', nombre: 'Escarabajo', icono: '🪲' },
+      { id: 'sombrero', nombre: 'Sombrero', icono: '🎩' },
+      { id: 'gema', nombre: 'Gema', icono: '💎' },
+      { id: 'llave', nombre: 'Llave', icono: '🔑' },
+    ];
+  
+    let html = '<h3 style="margin:0 0 8px 0;">Inventario</h3>';
+  
+    items.forEach((item) => {
+      const recogido = this.inventario[item.id];
+  
+      html += `
+        <div style="
+          opacity:${recogido ? '1.0' : '0.35'};
+          margin:4px 0;
+          font-size:18px;
+        ">
+          <span style="display:inline-block; width:28px;">${item.icono}</span>
+          ${item.nombre}
+          ${recogido ? '✓' : ''}
+        </div>
+      `;
+    });
+  
+    this.elemInventario.innerHTML = html;
   }
 
   // ── EVENTOS ───────────────────────────────────────────────────────────────────
@@ -249,12 +415,16 @@ class MyScene extends THREE.Scene {
  
     // ── Comprobar clic en el pomo de la puerta ────────────────────────────
     var impactosPuerta = this.raycaster.intersectObject(this.puerta, true);
+    
     if (impactosPuerta.length > 0) {
-      if (this.todosRecogidos) {
+      if (this.todosLosPickupsRecogidos()) {
+        this.todosRecogidos = true;
         this.puerta.iniciarApertura();
         this.mostrarMensaje('¡Puerta abierta! ¡Has escapado del templo!');
       } else {
-        this.mostrarMensaje('Necesitas recoger todos los artefactos primero...');
+        const recogidos = this.pickups.filter(p => p.recogido).length;
+        const total = this.pickups.length;
+        this.mostrarMensaje(`Necesitas recoger todos los artefactos primero (${recogidos}/${total}).`);
       }
       return;
     }
@@ -286,18 +456,32 @@ class MyScene extends THREE.Scene {
  
   // ── RECOGER PICK-UP ───────────────────────────────────────────────────────────
   recogerPickup(pickup) {
-    pickup.recogido     = true;
+    if (pickup.recogido) return;
+  
+    pickup.recogido = true;
     pickup.objeto.visible = false;
- 
-    var recogidos = this.pickups.filter(p => p.recogido).length;
-    var total     = this.pickups.length;
- 
-    this.mostrarMensaje(`Artefacto recogido (${recogidos}/${total})`);
- 
-    if (recogidos === total) {
-      this.todosRecogidos = true;
-      this.mostrarMensaje('¡Todos los artefactos recogidos! Encuentra la salida...');
+  
+    this.inventario[pickup.id] = true;
+  
+    const recogidos = this.pickups.filter(p => p.recogido).length;
+    const total = this.pickups.length;
+  
+    if (pickup.id === 'llave') {
+      this.mostrarMensaje(`Llave recogida (${recogidos}/${total}).`);
+    } else {
+      this.mostrarMensaje(`${pickup.nombre} recogido (${recogidos}/${total}).`);
     }
+  
+    if (this.todosLosPickupsRecogidos()) {
+      this.todosRecogidos = true;
+      this.mostrarMensaje('¡Todos los artefactos recogidos! Encuentra la salida.');
+    }
+  
+    this.actualizarInventario();
+  }
+
+  todosLosPickupsRecogidos() {
+    return this.pickups.length > 0 && this.pickups.every(p => p.recogido);
   }
  
   // ── MENSAJE EN PANTALLA  ─────────────────────────────────
