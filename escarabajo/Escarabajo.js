@@ -67,6 +67,8 @@ class Escarabajo extends THREE.Object3D {
       colorOjos: '#20160F',
       velMarcha: 2.5,
       ampColmillo: 0.3,
+      velAlas: 0.8,
+      ampAlas: 0.9,
       animaciones: true,
     };
 
@@ -88,6 +90,12 @@ class Escarabajo extends THREE.Object3D {
 
     folder.add(this.guiControls, 'ampColmillo', 0.0, 0.8)
       .name('Apertura colmillos: ');
+
+    folder.add(this.guiControls, 'velAlas', 0.1, 3.0)
+      .name('Velocidad alas: ');
+
+    folder.add(this.guiControls, 'ampAlas', 0.0, 1.2)
+      .name('Apertura alas: ');
 
     folder.add(this.guiControls, 'animaciones')
       .name('Animaciones activadas')
@@ -154,37 +162,65 @@ class Escarabajo extends THREE.Object3D {
   }
 
   createElitroMesh(d, lado) {
+    const pivoteAla = new THREE.Object3D();
+
     const elitroGeo = new THREE.SphereGeometry(1, 128, 128, 0, Math.PI / 2 - 0.015);
     
     elitroGeo.rotateX(-Math.PI / 2);
-
-    const grupo = new THREE.Group();
-
+  
     const outer = new THREE.Mesh(elitroGeo, this.matLapis);
-    outer.scale.set(d.elitroAncho, d.elitroAlto, d.elitroLargo);
-    outer.position.set(-0.001, d.elitroLift, -0.008);
-
-    grupo.add(outer);
-
-    if (lado < 0) {
-      grupo.scale.x = -1;
-    }
-
-    return grupo;
+  
+    // Importante:
+    // No escalamos el pivote con scale.x = -1.
+    // Escalamos directamente el mesh para evitar ejes raros al animar.
+    outer.scale.set(
+      lado * d.elitroAncho,
+      d.elitroAlto,
+      d.elitroLargo
+    );
+  
+    // Posición cerrada que ya estabas usando para los élitros.
+    const posCerrada = new THREE.Vector3(
+      -0.001,
+      d.elitroLift,
+      -0.008
+    );
+  
+    // Punto fijo de giro: detrás del cuello, donde empiezan las alas.
+    // Este punto está en coordenadas locales del cuerpo.
+    const puntoFijo = new THREE.Vector3(
+      lado * d.cuerpoRX * 0.075,
+      d.cuerpoRY * 0.58,
+      d.cuerpoRZ * 0.48
+    );
+  
+    // El pivote se coloca en el punto fijo.
+    pivoteAla.position.copy(puntoFijo);
+  
+    // El ala se coloca relativa al pivote.
+    // Así, al rotar pivoteAla, el punto fijo no se mueve.
+    outer.position.copy(posCerrada).sub(puntoFijo);
+  
+    pivoteAla.add(outer);
+  
+    return pivoteAla;
   }
 
   createCuerpo(d) {
     const grupo = new THREE.Group();
-
+  
     const cuerpo = new THREE.Mesh(
       this.createScaledSphere(d.cuerpoRX, d.cuerpoRY, d.cuerpoRZ, 40, 28),
       this.matOro
     );
     grupo.add(cuerpo);
-
-    grupo.add(this.createElitroMesh(d, -1));
-    grupo.add(this.createElitroMesh(d, 1));
-
+  
+    this.pivoteAlaIzq = this.createElitroMesh(d, -1);
+    this.pivoteAlaDer = this.createElitroMesh(d, 1);
+  
+    grupo.add(this.pivoteAlaIzq);
+    grupo.add(this.pivoteAlaDer);
+  
     return grupo;
   }
 
@@ -394,6 +430,8 @@ class Escarabajo extends THREE.Object3D {
     this.legs = [];
     this.pivoteColmilloIzq = null;
     this.pivoteColmilloDer = null;
+    this.pivoteAlaIzq = null;
+    this.pivoteAlaDer = null;
 
     grupo.add(this.createCuerpo(d));
 
@@ -473,6 +511,31 @@ class Escarabajo extends THREE.Object3D {
 
     if (this.pivoteColmilloIzq) this.pivoteColmilloIzq.rotation.y = angFauces;
     if (this.pivoteColmilloDer) this.pivoteColmilloDer.rotation.y = -angFauces;
+
+    if (this.pivoteAlaIzq && this.pivoteAlaDer) {
+      const velAlas = this.guiControls.velAlas;
+      const ampAlas = this.guiControls.ampAlas;
+    
+      const apertura = (Math.sin(t * velAlas * 2.0) * 0.5 + 0.5) * ampAlas;
+    
+      // Reiniciamos antes de aplicar la animación para evitar acumulaciones raras.
+      this.pivoteAlaIzq.rotation.set(0, 0, 0);
+      this.pivoteAlaDer.rotation.set(0, 0, 0);
+    
+      // Apertura:
+      // - rotation.z levanta el borde exterior del élitro.
+      // - rotation.x le da un pequeño movimiento hacia atrás/arriba.
+      //
+      // Los signos están invertidos entre lados para que abran simétricamente.
+      this.pivoteAlaIzq.rotation.z = apertura * 0.70;
+      this.pivoteAlaDer.rotation.z = -apertura * 0.70;
+    
+      this.pivoteAlaIzq.rotation.x = apertura * 0.22;
+      this.pivoteAlaDer.rotation.x = apertura * 0.22;
+
+      this.pivoteAlaIzq.rotation.y = -apertura * 0.25;
+      this.pivoteAlaDer.rotation.y = apertura * 0.25;
+    }
   }
 }
 
