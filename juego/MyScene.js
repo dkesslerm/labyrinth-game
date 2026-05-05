@@ -39,15 +39,18 @@ class MyScene extends THREE.Scene {
     // Todo elemento que se desee sea tenido en cuenta en el renderizado de la escena debe pertenecer a esta. Bien como hijo de la escena (this en esta clase) o como hijo de un elemento que ya esté en la escena.
     // Tras crear cada elemento se añadirá a la escena con   this.add(variable)
     this.createLights();
-
-    // Tendremos una cámara con un control de movimiento con el ratón
-    this.createCamera();
-
+    
     // Crear el laberinto
     this.laberinto = new Laberinto();
     this.add(this.laberinto);
+    
+    // Tendremos una cámara con un control de movimiento con el ratón
+    this.createCamera();
 
-    // Colocar la cámara en la posición inicial del laberinto
+    // Y otra cámara arriba
+    this.configurarCamaraTop();
+
+    // Colocar la cámara principal en la posición inicial del laberinto
     var posInicial = this.laberinto.getPosicionInicial();
     this.camera.position.copy(posInicial);
 
@@ -57,6 +60,7 @@ class MyScene extends THREE.Scene {
     this.puerta.position.copy(posPuerta);
     this.puerta.rotation.y = Math.PI;
     this.add(this.puerta);
+
 
     // ── Pick-ups: Cada entrada: { objeto: Object3D, recogido: false }
     this.pickups = [];
@@ -78,7 +82,7 @@ class MyScene extends THREE.Scene {
     this.teclas = { w: false, s: false, a: false, d: false };
 
     // Velocidad
-    this.velocidad = 5.0;   // metros por segundo
+    this.velocidad = this.guiControls.velocidadJugador;   // metros por segundo
 
     //Raycaster para picking
     this.raycaster     = new THREE.Raycaster();
@@ -104,6 +108,7 @@ class MyScene extends THREE.Scene {
     return renderer;
   }
 
+
   createCamera() {
     // Para crear una cámara le indicamos
     //   El ángulo del campo de visión vértical en grados sexagesimales
@@ -127,39 +132,79 @@ class MyScene extends THREE.Scene {
     // PointerLockControls
     this.controls = new PointerLockControls(this.camera, this.renderer.domElement);
 
-    //Segunda cámara para vista cenital
-    var tam = this.laberinto ? this.laberinto.mapa[0].length * this.laberinto.tamCelda / 2 : 30;
+    // Segunda cámara para vista cenital.
+    // La configuramos después con configurarCamaraTop().
     this.camaraTop = new THREE.OrthographicCamera(
-      -tam,  tam,   // left, right
-       tam, -tam,   // top, bottom
-       0.1,  200    // near, far
+      -10, 10,
+       10, -10,
+       0.1, 200
     );
+    
     this.camaraTop.position.set(0, 50, 0);
     this.camaraTop.lookAt(0, 0, 0);
     this.add(this.camaraTop);
 
   }
 
-  createGUI() {
-    // Se crea la interfaz gráfica de usuario
-    var gui = new GUI();
+  configurarCamaraTop() {
+    if (!this.laberinto || !this.camaraTop) return;
+  
+    const filas = this.laberinto.mapa.length;
+    const cols  = this.laberinto.mapa[0].length;
+    const t     = this.laberinto.tamCelda;
+  
+    const semiAncho = (cols  * t) / 2;
+    const semiAlto  = (filas * t) / 2;
+  
+    // Margen pequeño para que no se corte el borde exterior del laberinto.
+    const margen = t * 0.35;
+  
+    // Como el viewport del minimapa es cuadrado, usamos el eje mayor.
+    const semi = Math.max(semiAncho, semiAlto) + margen;
+  
+    this.camaraTop.left   = -semi;
+    this.camaraTop.right  =  semi;
+    this.camaraTop.top    =  semi;
+    this.camaraTop.bottom = -semi;
+    this.camaraTop.near   = 0.1;
+    this.camaraTop.far    = 200;
+  
+    this.camaraTop.position.set(0, 50, 0);
+    this.camaraTop.lookAt(0, 0, 0);
+    this.camaraTop.updateProjectionMatrix();
+  }
 
-    // La escena le va a añadir sus propios controles.
-    // Se definen mediante un objeto de control
-    // En este caso la intensidad de la luz y si se muestran o no los ejes
+  createGUI() {
+    var gui = new GUI();
+  
     this.guiControls = {
       luzAmbiente : 1.5,
       luzFocal    : 100,
+      velocidadJugador: 5.0,
     };
- 
-    var folder = gui.addFolder('Iluminación');
-    folder.add(this.guiControls, 'luzAmbiente', 0, 5, 0.1)
+  
+    var folderJuego = gui.addFolder('Juego');
+  
+    folderJuego.add(this.guiControls, 'velocidadJugador', 1.0, 10.0, 0.1)
+      .name('Velocidad jugador')
+      .onChange((v) => {
+        this.velocidad = v;
+      });
+  
+    var folderLuces = gui.addFolder('Iluminación');
+  
+    folderLuces.add(this.guiControls, 'luzAmbiente', 0, 5, 0.1)
       .name('Luz ambiente')
-      .onChange((v) => { this.ambientLight.intensity = v; });
-    folder.add(this.guiControls, 'luzFocal', 0, 1000, 10)
+      .onChange((v) => {
+        this.ambientLight.intensity = v;
+      });
+  
+    folderLuces.add(this.guiControls, 'luzFocal', 0, 1000, 10)
       .name('Luz focal')
-      .onChange((v) => { this.spotLight.power = v; });
- 
+      .onChange((v) => {
+        this.spotLight.power = v;
+      });
+  
     return gui;
   }
 
@@ -191,9 +236,33 @@ class MyScene extends THREE.Scene {
   }
 
   // ── CREACIÓN DE PICKUPS ──────────────────────────────────────────────────────
+
+  // Necesitamos una GUI de juguete para que las GUI de cada picukp individual no 
+  // aparezcan en la GUI del juego. 
+  crearGUIDummy() {
+    const controladorDummy = {
+      name: function () { return this; },
+      onChange: function () { return this; },
+      listen: function () { return this; },
+    };
+  
+    const folderDummy = {
+      add: function () { return controladorDummy; },
+      addColor: function () { return controladorDummy; },
+      addFolder: function () { return folderDummy; },
+      open: function () { return this; },
+      close: function () { return this; },
+    };
+  
+    return {
+      addFolder: function () { return folderDummy; },
+      add: function () { return controladorDummy; },
+      addColor: function () { return controladorDummy; },
+    };
+  } 
+  
   crearPickups() {
     // Coordenadas en el mapa del laberinto: fila, columna.
-    // Todas estas celdas son pasillos accesibles según tu mapa actual.
     const configs = [
       {
         id: 'daga',
@@ -257,20 +326,16 @@ class MyScene extends THREE.Scene {
   crearPickup(cfg) {
     const pos = this.laberinto.celdaAMundo(cfg.fila, cfg.col);
   
-    // Asumo que tus clases aceptan (gui, titleGui), como Puerta y Llave.
-    // Si alguna clase no usa esos parámetros, no pasa nada.
-    const objeto = new cfg.Clase(this.gui, cfg.nombre);
+    const guiDummy = this.crearGUIDummy();
+    const objeto = new cfg.Clase(guiDummy, cfg.nombre);
   
     objeto.position.set(pos.x, 0.35, pos.z);
     objeto.rotation.y = cfg.rotY || 0;
     objeto.scale.setScalar(cfg.escala || 1);
   
-    // Marcamos la raíz del pickup.
     objeto.userData.esPickup = true;
     objeto.userData.pickupId = cfg.id;
   
-    // Marcamos también todos los hijos para que el raycaster pueda
-    // encontrar el pickup aunque se haga click sobre una pieza interna.
     objeto.traverse((nodo) => {
       nodo.userData.esPickup = true;
       nodo.userData.pickupId = cfg.id;
@@ -490,30 +555,93 @@ class MyScene extends THREE.Scene {
       this._timerMensaje = setTimeout(() => { elem.innerHTML = ''; }, 3000);
     }
   }
-
+ 
   // ── MOVIMIENTO DEL JUGADOR ────────────────────────────────────────────────────
+
+  getObjetosColision() {
+    // Paredes del laberinto
+    const objetos = this.laberinto.getParedes().map(p => p.mesh);
+  
+    // Hoja de la puerta.
+    // La puerta completa incluye marco, columnas y dintel.
+    // Para bloquear el paso nos interesa la hoja, que está dentro de this.puerta.pivote.
+    if (this.puerta && this.puerta.pivote) {
+      objetos.push(this.puerta.pivote);
+    }
+  
+    return objetos;
+  }
+  
+  hayColisionJugadorRaycasting(posicion) {
+    const objetosColision = this.getObjetosColision();
+  
+    // Radio aproximado del cuerpo del jugador
+    const radioJugador = 0.34;
+  
+    // Alturas a las que comprobamos colisión.
+    // Así no dependemos solo de un rayo a la altura de los ojos.
+    const alturas = [0.45, 1.15, 1.70];
+  
+    // Direcciones horizontales alrededor del jugador.
+    // Esto simula un volumen circular usando raycasting.
+    const direcciones = [
+      new THREE.Vector3( 1, 0,  0),
+      new THREE.Vector3(-1, 0,  0),
+      new THREE.Vector3( 0, 0,  1),
+      new THREE.Vector3( 0, 0, -1),
+  
+      new THREE.Vector3( 1, 0,  1).normalize(),
+      new THREE.Vector3( 1, 0, -1).normalize(),
+      new THREE.Vector3(-1, 0,  1).normalize(),
+      new THREE.Vector3(-1, 0, -1).normalize(),
+    ];
+  
+    for (let h = 0; h < alturas.length; h++) {
+      const origenBase = new THREE.Vector3(
+        posicion.x,
+        alturas[h],
+        posicion.z
+      );
+  
+      for (let i = 0; i < direcciones.length; i++) {
+        this.raycaster.set(origenBase, direcciones[i]);
+        this.raycaster.far = radioJugador;
+  
+        const impactos = this.raycaster.intersectObjects(objetosColision, true);
+  
+        if (impactos.length > 0) {
+          return true;
+        }
+      }
+    }
+  
+    return false;
+  }
+  
   // Velocidad independiente del ordenador: e = v · Δt
   // Colisiones con Raycaster
-  
   moverJugador() {
     if (!this.controls.isLocked) return;
   
-    var dt = this.reloj.getDelta();
+    let dt = this.reloj.getDelta();
   
-    // Dirección de mirada horizontal robusta.
-    // No usamos directamente getDirection().y = 0 porque si miras
-    // completamente arriba/abajo puede quedar vector casi nulo.
+    // Evitamos saltos enormes si el navegador pega un tirón.
+    // Esto reduce mucho los atravesamientos por tunneling.
+    dt = Math.min(dt, 0.05);
+  
+    // Dirección real de la cámara
     this.controls.getDirection(this.dirMirada);
   
-    var dirHorizontal = new THREE.Vector3(
+    // Proyección horizontal robusta
+    const dirHorizontal = new THREE.Vector3(
       this.dirMirada.x,
       0,
       this.dirMirada.z
     );
   
+    // Si miras completamente arriba/abajo, la proyección horizontal
+    // puede ser casi nula.
     if (dirHorizontal.lengthSq() < 0.000001) {
-      // Si estás mirando casi perfectamente hacia arriba/abajo,
-      // usamos la orientación horizontal de la cámara.
       dirHorizontal.set(0, 0, -1);
       dirHorizontal.applyQuaternion(this.camera.quaternion);
       dirHorizontal.y = 0;
@@ -521,53 +649,59 @@ class MyScene extends THREE.Scene {
   
     dirHorizontal.normalize();
   
-    var dirLateral = new THREE.Vector3()
+    const dirLateral = new THREE.Vector3()
       .crossVectors(dirHorizontal, new THREE.Vector3(0, 1, 0))
       .normalize();
   
-    var avance = 0;
-    var lateral = 0;
+    // Calculamos intención de movimiento
+    let movimiento = new THREE.Vector3(0, 0, 0);
   
-    if (this.teclas.w) avance  += this.velocidad * dt;
-    if (this.teclas.s) avance  -= this.velocidad * dt;
-    if (this.teclas.a) lateral -= this.velocidad * dt;
-    if (this.teclas.d) lateral += this.velocidad * dt;
+    if (this.teclas.w) movimiento.addScaledVector(dirHorizontal,  this.velocidad * dt);
+    if (this.teclas.s) movimiento.addScaledVector(dirHorizontal, -this.velocidad * dt);
+    if (this.teclas.a) movimiento.addScaledVector(dirLateral,    -this.velocidad * dt);
+    if (this.teclas.d) movimiento.addScaledVector(dirLateral,     this.velocidad * dt);
   
-    var radioJugador = 0.32;
+    movimiento.y = 0;
   
-    // Movimiento por ejes separados: permite deslizarse por paredes
-    // en vez de quedarse bloqueado completamente.
-    var nuevaX = this.camera.position.x;
-    var nuevaZ = this.camera.position.z;
+    if (movimiento.lengthSq() === 0) {
+      this.camera.position.y = 1.75;
+      this.raycaster.far = 2.5;
+      return;
+    }
   
-    // Avance / retroceso
-    if (avance !== 0) {
-      var xAvance = nuevaX + dirHorizontal.x * avance;
-      var zAvance = nuevaZ + dirHorizontal.z * avance;
+    // Dividimos el desplazamiento en pasos pequeños.
+    // Si intentas moverte mucho en un frame, no saltas al otro lado de la pared.
+    const maxPaso = 0.06;
+    const distanciaTotal = movimiento.length();
+    const numPasos = Math.ceil(distanciaTotal / maxPaso);
+    const paso = movimiento.clone().divideScalar(numPasos);
   
-      if (!this.laberinto.hayColision(xAvance, zAvance, radioJugador)) {
-        nuevaX = xAvance;
-        nuevaZ = zAvance;
+    for (let i = 0; i < numPasos; i++) {
+      // Intentamos mover primero en X y luego en Z.
+      // Esto permite deslizarse por las paredes en vez de bloquearse del todo.
+  
+      const candidataX = this.camera.position.clone();
+      candidataX.x += paso.x;
+  
+      if (!this.hayColisionJugadorRaycasting(candidataX)) {
+        this.camera.position.x = candidataX.x;
+      }
+  
+      const candidataZ = this.camera.position.clone();
+      candidataZ.z += paso.z;
+  
+      if (!this.hayColisionJugadorRaycasting(candidataZ)) {
+        this.camera.position.z = candidataZ.z;
       }
     }
   
-    // Movimiento lateral
-    if (lateral !== 0) {
-      var xLateral = nuevaX + dirLateral.x * lateral;
-      var zLateral = nuevaZ + dirLateral.z * lateral;
-  
-      if (!this.laberinto.hayColision(xLateral, zLateral, radioJugador)) {
-        nuevaX = xLateral;
-        nuevaZ = zLateral;
-      }
-    }
-  
-    this.camera.position.x = nuevaX;
-    this.camera.position.z = nuevaZ;
+    // Altura fija
     this.camera.position.y = 1.75;
-  }
-
   
+    // Restauramos distancia para picking
+    this.raycaster.far = 2.5;
+  }
+ 
   // ── RENDERIZADO CON VIEWPORTS  ───────────────────────────────
   // Método reutilizable para renderizar una cámara en un viewport concreto.
   // left, top, width, height toman valores entre 0 y 1 (proporciones de pantalla)
@@ -588,6 +722,24 @@ class MyScene extends THREE.Scene {
     }
  
     this.renderer.render(this, camara);
+  }
+
+  renderMinimapa() {
+    // El minimapa será siempre cuadrado.
+    // Usamos el menor lado de la ventana para calcular el tamaño.
+    var lado = Math.min(window.innerWidth, window.innerHeight) * 0.3;
+  
+    // Margen respecto a la esquina inferior derecha.
+    var margen = 20;
+  
+    var x = window.innerWidth - lado - margen;
+    var y = margen;
+  
+    this.renderer.setViewport(x, y, lado, lado);
+    this.renderer.setScissor(x, y, lado, lado);
+    this.renderer.setScissorTest(true);
+  
+    this.renderer.render(this, this.camaraTop);
   }
 
 
@@ -613,13 +765,7 @@ class MyScene extends THREE.Scene {
     
     // Actualizar cámara ortográfica del minimapa
     if (this.camaraTop) {
-      var tam = this.laberinto.mapa[0].length * this.laberinto.tamCelda / 2;
-      var ratio = window.innerWidth / window.innerHeight;
-      this.camaraTop.left   = -tam * ratio;
-      this.camaraTop.right  =  tam * ratio;
-      this.camaraTop.top    =  tam;
-      this.camaraTop.bottom = -tam;
-      this.camaraTop.updateProjectionMatrix();
+      this.configurarCamaraTop();
     }
 
     // Y también el tamaño del renderizador
@@ -645,8 +791,8 @@ class MyScene extends THREE.Scene {
     this.renderViewport(this.camera, 0, 0, 1, 1);
  
     // 5. Renderizar minimapa (esquina inferiror derecha, 25% de pantalla)
-    this.renderViewport(this.camaraTop, 0.75, 0, 0.25, 0.25);
- 
+    this.renderMinimapa();
+    
     // 6. Siguiente frame
     requestAnimationFrame(() => this.update());
   }
