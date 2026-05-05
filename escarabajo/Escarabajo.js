@@ -11,16 +11,10 @@ class Escarabajo extends THREE.Object3D {
     });
 
     this.matLapis = new THREE.MeshStandardMaterial({
-      color: 0x12307A,
+      color: 0x028027,
       metalness: 0.55,
       roughness: 0.35,
       side: THREE.DoubleSide,
-    });
-
-    this.matOjo = new THREE.MeshStandardMaterial({
-      color: 0x20160F,
-      metalness: 0.18,
-      roughness: 0.55,
     });
 
     this.matPata = new THREE.MeshStandardMaterial({
@@ -34,19 +28,6 @@ class Escarabajo extends THREE.Object3D {
       metalness: 0.0,
       roughness: 0.65,
     });
-
-    this.matEsmeralda = new THREE.MeshPhysicalMaterial({
-      color:        0x12307A,
-      metalness:    0.0,
-      roughness:    0.05,
-      transmission: 0.45,
-      thickness:    0.8,
-      ior:          1.72,
-      clearcoat:    1.0,
-      clearcoatRoughness: 0.05,
-      side: THREE.DoubleSide,
-    });
-
     
     this.pivoteColmilloIzq = null;
     this.pivoteColmilloDer = null;
@@ -63,8 +44,7 @@ class Escarabajo extends THREE.Object3D {
   createGUI(gui, titleGui) {
     this.guiControls = {
       colorOro: '#D4A017',
-      colorLapis: '#12307A',
-      colorOjos: '#20160F',
+      colorLapis: '#028027',
       velMarcha: 2.5,
       ampColmillo: 0.3,
       velAlas: 0.8,
@@ -80,11 +60,7 @@ class Escarabajo extends THREE.Object3D {
     folder.addColor(this.guiControls, 'colorLapis')
       .name('Color lapislázuli: ')
       .onChange((v) => this.matLapis.color.set(v));
-
-    folder.addColor(this.guiControls, 'colorOjos')
-      .name('Color ojos: ')
-      .onChange((v) => this.matOjo.color.set(v));
-
+    
     folder.add(this.guiControls, 'velMarcha', 0.1, 4.0)
       .name('Velocidad patas: ');
 
@@ -134,8 +110,6 @@ class Escarabajo extends THREE.Object3D {
       femurRadio: 0.007,
       tibiaLargo: 0.078,
       tibiaRadio: 0.0055,
-      tarsoLargo: 0.030,
-      tarsoRadio: 0.0038,
     };
   }
 
@@ -227,29 +201,19 @@ class Escarabajo extends THREE.Object3D {
   createOjo(d, lado) {
     const grupo = new THREE.Group();
   
-    // Tamaño del ojo: algo más pequeño que tu versión actual,
-    // pero todavía visible como gema/pirámide.
     const baseOjo = d.cabezaRX * 0.165;
     const largoOjo = d.cabezaRZ * 0.185;
   
-    // Más separados que antes, pero sin irse al lateral extremo.
-    // Antes tenías 0.25: demasiado juntos.
     const x = lado * d.cabezaRX * 0.48;
   
-    // Menos frontal que antes.
-    // Antes tenías 0.90: eso los llevaba casi a la punta de la cabeza.
     const z = d.cabezaRZ * 0.58;
   
-    // Superficie real del elipsoide de la cabeza:
-    // x²/rx² + y²/ry² + z²/rz² = 1
     const val = 1.0 -
       (x * x) / (d.cabezaRX * d.cabezaRX) -
       (z * z) / (d.cabezaRZ * d.cabezaRZ);
   
     const ySuperficie = d.cabezaRY * Math.sqrt(Math.max(0.0, val));
   
-    // Offset muy pequeño: si lo subes mucho, parecen flotantes.
-    // Si lo bajas a 0, puede haber z-fighting con la cabeza.
     const offsetExterior = 0.0015;
   
     grupo.position.set(
@@ -258,21 +222,14 @@ class Escarabajo extends THREE.Object3D {
       z
     );
   
-    // Normal de la cabeza en ese punto. Esta es la dirección "natural"
-    // de salida desde la superficie.
     const normalCabeza = new THREE.Vector3(
       x / (d.cabezaRX * d.cabezaRX),
       ySuperficie / (d.cabezaRY * d.cabezaRY),
       z / (d.cabezaRZ * d.cabezaRZ)
     ).normalize();
   
-    // Dirección ligeramente frontal, pero no tanto como antes.
     const dirFrontal = new THREE.Vector3(lado * 0.38, 0.10, 1.0).normalize();
   
-    // Mezcla:
-    // 0.0 = totalmente normal a la cabeza
-    // 1.0 = totalmente frontal
-    // 0.32 deja una orientación intermedia y pegada al volumen.
     const dir = normalCabeza.clone().lerp(dirFrontal, 0.32).normalize();
   
     const montaje = new THREE.Object3D();
@@ -285,14 +242,9 @@ class Escarabajo extends THREE.Object3D {
     const geoPir = new THREE.ConeGeometry(baseOjo, largoOjo, 4, 1);
     geoPir.rotateY(Math.PI / 4);
   
-    const ojo = new THREE.Mesh(geoPir, this.matEsmeralda);
-  
-    // ConeGeometry está centrado en Y:
-    // base en -largo/2 y punta en +largo/2.
-    // Con esto dejamos la base justo en el plano del engaste.
+    const ojo = new THREE.Mesh(geoPir, this.matLapis);
     ojo.position.y = largoOjo * 0.5;
   
-    // Surco / engaste rodeando el ojo.
     const geoSurco = new THREE.TorusGeometry(
       baseOjo * 1.08,
       baseOjo * 0.12,
@@ -305,7 +257,7 @@ class Escarabajo extends THREE.Object3D {
   
     const surco = new THREE.Mesh(geoSurco, this.matPata);
   
-    // Un pelín hundido respecto a la pirámide para que parezca incrustado.
+    // Un poco hundido respecto a la pirámide para que parezca incrustado.
     surco.position.y = -0.0004;
   
     montaje.add(surco);
@@ -403,18 +355,6 @@ class Escarabajo extends THREE.Object3D {
     pivoteRodilla.add(this.createCylinderBetween(
       new THREE.Vector3(0, 0, 0), pTibia,
       d.tibiaRadio * 0.50, d.tibiaRadio,
-      this.matPata
-    ));
-
-    const pTarso0 = pTibia;
-    const pTarso1 = pTibia.clone().add(new THREE.Vector3(
-      lado * d.tarsoLargo,
-      -0.010,
-      zBias * 0.18
-    ));
-    pivoteRodilla.add(this.createCylinderBetween(
-      pTarso0, pTarso1,
-      d.tarsoRadio * 0.45, d.tarsoRadio,
       this.matPata
     ));
 
