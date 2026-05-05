@@ -39,19 +39,17 @@ class MyScene extends THREE.Scene {
     // Todo elemento que se desee sea tenido en cuenta en el renderizado de la escena debe pertenecer a esta. Bien como hijo de la escena (this en esta clase) o como hijo de un elemento que ya esté en la escena.
     // Tras crear cada elemento se añadirá a la escena con   this.add(variable)
     this.createLights();
-    
+
+    // Tendremos una cámara con un control de movimiento con el ratón
+    this.createCamera();
+
     // Crear el laberinto
     this.laberinto = new Laberinto();
     this.add(this.laberinto);
-    
-    // Tendremos una cámara con un control de movimiento con el ratón
-    this.createCamera();
-    this.configurarCamaraTop();
 
     // Colocar la cámara en la posición inicial del laberinto
     var posInicial = this.laberinto.getPosicionInicial();
     this.camera.position.copy(posInicial);
-    this.posicionInicialJugador = posInicial.clone();
 
     //Creamos la puerta y la colocamos en su posición
     this.puerta = new Puerta(this.gui, 'Puerta');
@@ -59,7 +57,6 @@ class MyScene extends THREE.Scene {
     this.puerta.position.copy(posPuerta);
     this.puerta.rotation.y = Math.PI;
     this.add(this.puerta);
-
 
     // ── Pick-ups: Cada entrada: { objeto: Object3D, recogido: false }
     this.pickups = [];
@@ -73,23 +70,6 @@ class MyScene extends THREE.Scene {
     
     // Estado del juego
     this.todosRecogidos = false;
-
-    // Estado del enemigo escarabajo
-    this.gameOver = false;
-    this.reiniciando = false;
-    
-    this.pickupEscarabajo = null;
-    this.escarabajoActivo = true;
-    this.posicionInicialEscarabajo = null;
-    this.rotacionInicialEscarabajoY = 0;
-    
-    this.rutaEscarabajo = [];
-    this.timerRutaEscarabajo = 0;
-    this.recalcularRutaEscarabajoCada = 0.35;
-    
-    this.velocidadEscarabajo = this.guiControls.velocidadEscarabajo;
-    this.radioEscarabajo = 0.28;
-    this.distanciaMuerteEscarabajo = this.guiControls.distanciaMuerteEscarabajo;
     
     this.crearInventario();
     this.crearPickups();
@@ -98,7 +78,7 @@ class MyScene extends THREE.Scene {
     this.teclas = { w: false, s: false, a: false, d: false };
 
     // Velocidad
-    this.velocidad = this.guiControls.velocidadJugador;   // metros por segundo
+    this.velocidad = 5.0;   // metros por segundo
 
     //Raycaster para picking
     this.raycaster     = new THREE.Raycaster();
@@ -124,7 +104,6 @@ class MyScene extends THREE.Scene {
     return renderer;
   }
 
-
   createCamera() {
     // Para crear una cámara le indicamos
     //   El ángulo del campo de visión vértical en grados sexagesimales
@@ -149,102 +128,38 @@ class MyScene extends THREE.Scene {
     this.controls = new PointerLockControls(this.camera, this.renderer.domElement);
 
     //Segunda cámara para vista cenital
+    var tam = this.laberinto ? this.laberinto.mapa[0].length * this.laberinto.tamCelda / 2 : 30;
     this.camaraTop = new THREE.OrthographicCamera(
-      -10, 10,
-       10, -10,
-       0.1, 200
+      -tam,  tam,   // left, right
+       tam, -tam,   // top, bottom
+       0.1,  200    // near, far
     );
     this.camaraTop.position.set(0, 50, 0);
     this.camaraTop.lookAt(0, 0, 0);
     this.add(this.camaraTop);
-  }
-  
-  configurarCamaraTop() {
-    if (!this.laberinto || !this.camaraTop) return;
-  
-    const filas = this.laberinto.mapa.length;
-    const cols = this.laberinto.mapa[0].length;
-    const t = this.laberinto.tamCelda;
-  
-    const semiAncho = (cols * t) / 2;
-    const semiAlto  = (filas * t) / 2;
-    const margen = t * 0.4;
-  
-    // Como el minimapa se renderiza en un viewport cuadrado,
-    // usamos el mayor de los dos semiejes para evitar deformaciones.
-    const semi = Math.max(semiAncho, semiAlto) + margen;
-  
-    this.camaraTop.left   = -semi;
-    this.camaraTop.right  =  semi;
-    this.camaraTop.top    =  semi;
-    this.camaraTop.bottom = -semi;
-    this.camaraTop.near   = 0.1;
-    this.camaraTop.far    = 200;
-  
-    this.camaraTop.position.set(0, 50, 0);
-    this.camaraTop.lookAt(0, 0, 0);
-    this.camaraTop.updateProjectionMatrix();
+
   }
 
   createGUI() {
+    // Se crea la interfaz gráfica de usuario
     var gui = new GUI();
-  
+
+    // La escena le va a añadir sus propios controles.
+    // Se definen mediante un objeto de control
+    // En este caso la intensidad de la luz y si se muestran o no los ejes
     this.guiControls = {
       luzAmbiente : 1.5,
       luzFocal    : 100,
-  
-      velocidadJugador: 5.0,
-      escarabajoPersigue: true,
-      velocidadEscarabajo: 1.35,
-      distanciaMuerteEscarabajo: 1,
-  
-      reiniciarPartida: () => this.reiniciarPartida(),
     };
-  
-    var folder = gui.addFolder('Juego');
-  
-    folder.add(this.guiControls, 'velocidadJugador', 1.0, 10.0, 0.1)
-      .name('Velocidad jugador')
-      .onChange((v) => {
-        this.velocidad = v;
-      });
-  
-    folder.add(this.guiControls, 'escarabajoPersigue')
-      .name('Escarabajo persigue')
-      .onChange((v) => {
-        this.escarabajoActivo = v && !this.inventario.daga && !this.gameOver;
-        this.setAnimacionesEscarabajo(this.escarabajoActivo);
-      });
-  
-    folder.add(this.guiControls, 'velocidadEscarabajo', 0.2, 4.0, 0.1)
-      .name('Velocidad escarabajo')
-      .onChange((v) => {
-        this.velocidadEscarabajo = v;
-      });
-  
-    folder.add(this.guiControls, 'distanciaMuerteEscarabajo', 0.2, 1.5, 0.05)
-      .name('Distancia muerte')
-      .onChange((v) => {
-        this.distanciaMuerteEscarabajo = v;
-      });
-  
-    folder.add(this.guiControls, 'reiniciarPartida')
-      .name('Reiniciar partida');
-  
-    var folderLuces = gui.addFolder('Iluminación');
-  
-    folderLuces.add(this.guiControls, 'luzAmbiente', 0, 5, 0.1)
+ 
+    var folder = gui.addFolder('Iluminación');
+    folder.add(this.guiControls, 'luzAmbiente', 0, 5, 0.1)
       .name('Luz ambiente')
-      .onChange((v) => {
-        this.ambientLight.intensity = v;
-      });
-  
-    folderLuces.add(this.guiControls, 'luzFocal', 0, 1000, 10)
+      .onChange((v) => { this.ambientLight.intensity = v; });
+    folder.add(this.guiControls, 'luzFocal', 0, 1000, 10)
       .name('Luz focal')
-      .onChange((v) => {
-        this.spotLight.power = v;
-      });
-  
+      .onChange((v) => { this.spotLight.power = v; });
+ 
     return gui;
   }
 
@@ -342,19 +257,20 @@ class MyScene extends THREE.Scene {
   crearPickup(cfg) {
     const pos = this.laberinto.celdaAMundo(cfg.fila, cfg.col);
   
-    // GUI falsa para que los modelos que esperan un gui.addFolder()
-    // no rompan, pero tampoco creen controles visibles.
-    const guiDummy = this.crearGUIDummy();
-  
-    const objeto = new cfg.Clase(guiDummy, cfg.nombre);
+    // Asumo que tus clases aceptan (gui, titleGui), como Puerta y Llave.
+    // Si alguna clase no usa esos parámetros, no pasa nada.
+    const objeto = new cfg.Clase(this.gui, cfg.nombre);
   
     objeto.position.set(pos.x, 0.35, pos.z);
     objeto.rotation.y = cfg.rotY || 0;
     objeto.scale.setScalar(cfg.escala || 1);
   
+    // Marcamos la raíz del pickup.
     objeto.userData.esPickup = true;
     objeto.userData.pickupId = cfg.id;
   
+    // Marcamos también todos los hijos para que el raycaster pueda
+    // encontrar el pickup aunque se haga click sobre una pieza interna.
     objeto.traverse((nodo) => {
       nodo.userData.esPickup = true;
       nodo.userData.pickupId = cfg.id;
@@ -363,51 +279,15 @@ class MyScene extends THREE.Scene {
   
     this.add(objeto);
   
-    const registro = {
+    this.pickups.push({
       id: cfg.id,
       nombre: cfg.nombre,
       icono: cfg.icono,
       objeto: objeto,
       recogido: false,
-  
-      posicionInicial: objeto.position.clone(),
-      rotacionInicial: objeto.rotation.clone(),
-      escalaInicial: objeto.scale.clone(),
-    };
-  
-    this.pickups.push(registro);
-  
-    if (cfg.id === 'escarabajo') {
-      this.pickupEscarabajo = registro;
-      this.posicionInicialEscarabajo = objeto.position.clone();
-      this.rotacionInicialEscarabajoY = objeto.rotation.y;
-  
-      this.setAnimacionesEscarabajo(true);
-    }
+    });
   }
 
-  crearGUIDummy() {
-    const controladorDummy = {
-      name: function () { return this; },
-      onChange: function () { return this; },
-      listen: function () { return this; },
-    };
-  
-    const folderDummy = {
-      add: function () { return controladorDummy; },
-      addColor: function () { return controladorDummy; },
-      addFolder: function () { return folderDummy; },
-      open: function () { return this; },
-      close: function () { return this; },
-    };
-  
-    return {
-      addFolder: function () { return folderDummy; },
-      add: function () { return controladorDummy; },
-      addColor: function () { return controladorDummy; },
-    };
-  }
-  
   // ── INVENTARIO ───────────────────────────────────────────────────────────────
   crearInventario() {
     let contenedor = document.getElementById('Inventario');
@@ -566,7 +446,7 @@ class MyScene extends THREE.Scene {
       });
  
       if (pickup && !pickup.recogido) {
-        this.interactuarConPickup(pickup);
+        this.recogerPickup(pickup);
       }
     }
   }
@@ -574,38 +454,17 @@ class MyScene extends THREE.Scene {
   // ── RECOGER PICK-UP ───────────────────────────────────────────────────────────
   recogerPickup(pickup) {
     if (pickup.recogido) return;
-    if (this.gameOver) return;
   
     pickup.recogido = true;
     pickup.objeto.visible = false;
   
     this.inventario[pickup.id] = true;
   
-    if (pickup.id === 'daga') {
-      this.escarabajoActivo = false;
-      this.rutaEscarabajo = [];
-      this.setAnimacionesEscarabajo(false);
-  
-      if (this.guiControls) {
-        this.guiControls.escarabajoPersigue = false;
-      }
-    }
-  
-    if (pickup.id === 'escarabajo') {
-      this.escarabajoActivo = false;
-      this.rutaEscarabajo = [];
-      this.setAnimacionesEscarabajo(false);
-    }
-  
     const recogidos = this.pickups.filter(p => p.recogido).length;
     const total = this.pickups.length;
   
     if (pickup.id === 'llave') {
       this.mostrarMensaje(`Llave recogida (${recogidos}/${total}).`);
-    } else if (pickup.id === 'daga') {
-      this.mostrarMensaje(`Daga recogida (${recogidos}/${total}). El escarabajo ha quedado paralizado.`);
-    } else if (pickup.id === 'escarabajo') {
-      this.mostrarMensaje(`Escarabajo capturado (${recogidos}/${total}).`);
     } else {
       this.mostrarMensaje(`${pickup.nombre} recogido (${recogidos}/${total}).`);
     }
@@ -618,321 +477,9 @@ class MyScene extends THREE.Scene {
     this.actualizarInventario();
   }
 
-  interactuarConPickup(pickup) {
-    if (this.gameOver) return;
-    if (!pickup || pickup.recogido) return;
-  
-    // Caso especial: el escarabajo mata si no tienes la daga.
-    if (pickup.id === 'escarabajo' && !this.inventario.daga) {
-      this.matarJugador('Has intentado coger el escarabajo sin la daga.');
-      return;
-    }
-  
-    // Si ya tienes la daga, el escarabajo se recoge normal.
-    this.recogerPickup(pickup);
-  }
-
   todosLosPickupsRecogidos() {
     return this.pickups.length > 0 && this.pickups.every(p => p.recogido);
   }
-
-  // BFS
-  
-  claveCelda(celda) {
-    return celda.fila + ',' + celda.col;
-  }
-  
-  calcularRutaBFS(origen, destino) {
-    if (!this.laberinto.esCeldaTransitable(origen.fila, origen.col)) return [];
-    if (!this.laberinto.esCeldaTransitable(destino.fila, destino.col)) return [];
-  
-    const claveOrigen = this.claveCelda(origen);
-    const claveDestino = this.claveCelda(destino);
-  
-    if (claveOrigen === claveDestino) return [];
-  
-    const cola = [origen];
-    const visitados = new Set();
-    const padre = new Map();
-  
-    visitados.add(claveOrigen);
-  
-    const dirs = [
-      { df: -1, dc: 0 },
-      { df:  1, dc: 0 },
-      { df:  0, dc: -1 },
-      { df:  0, dc: 1 },
-    ];
-  
-    let encontrado = false;
-  
-    while (cola.length > 0) {
-      const actual = cola.shift();
-      const claveActual = this.claveCelda(actual);
-  
-      if (claveActual === claveDestino) {
-        encontrado = true;
-        break;
-      }
-  
-      dirs.forEach((d) => {
-        const vecino = {
-          fila: actual.fila + d.df,
-          col: actual.col + d.dc,
-        };
-  
-        if (!this.laberinto.esCeldaTransitable(vecino.fila, vecino.col)) return;
-  
-        const claveVecino = this.claveCelda(vecino);
-        if (visitados.has(claveVecino)) return;
-  
-        visitados.add(claveVecino);
-        padre.set(claveVecino, actual);
-        cola.push(vecino);
-      });
-    }
-  
-    if (!encontrado) return [];
-  
-    const ruta = [];
-    let actual = destino;
-  
-    while (this.claveCelda(actual) !== claveOrigen) {
-      ruta.push(actual);
-      actual = padre.get(this.claveCelda(actual));
-  
-      if (!actual) return [];
-    }
-  
-    ruta.reverse();
-  
-    return ruta;
-  }
-  
-  calcularRutaEscarabajoHaciaJugador() {
-    if (!this.pickupEscarabajo) return [];
-    if (this.pickupEscarabajo.recogido) return [];
-  
-    const escarabajo = this.pickupEscarabajo.objeto;
-  
-    const celdaEscarabajo = this.laberinto.mundoACelda(
-      escarabajo.position.x,
-      escarabajo.position.z
-    );
-  
-    const celdaJugador = this.laberinto.mundoACelda(
-      this.camera.position.x,
-      this.camera.position.z
-    );
-  
-    const rutaCeldas = this.calcularRutaBFS(celdaEscarabajo, celdaJugador);
-  
-    return rutaCeldas.map((celda) => {
-      const pos = this.laberinto.celdaAMundo(celda.fila, celda.col);
-      return new THREE.Vector3(pos.x, escarabajo.position.y, pos.z);
-    });
-  }
-
-  actualizarEscarabajoPerseguidor(dt) {
-    if (this.gameOver) return;
-    if (!this.escarabajoActivo) return;
-    if (!this.guiControls.escarabajoPersigue) return;
-    if (!this.pickupEscarabajo) return;
-    if (this.pickupEscarabajo.recogido) return;
-  
-    if (this.inventario.daga) {
-      this.escarabajoActivo = false;
-      this.rutaEscarabajo = [];
-      this.setAnimacionesEscarabajo(false);
-      return;
-    }
-  
-    this.setAnimacionesEscarabajo(true);
-    const escarabajo = this.pickupEscarabajo.objeto;
-  
-    this.timerRutaEscarabajo += dt;
-  
-    if (this.timerRutaEscarabajo >= this.recalcularRutaEscarabajoCada) {
-      this.rutaEscarabajo = this.calcularRutaEscarabajoHaciaJugador();
-      this.timerRutaEscarabajo = 0;
-    }
-  
-    if (!this.rutaEscarabajo || this.rutaEscarabajo.length === 0) {
-      this.comprobarContactoEscarabajo();
-      return;
-    }
-  
-    const objetivo = this.rutaEscarabajo[0];
-  
-    const dir = new THREE.Vector3(
-      objetivo.x - escarabajo.position.x,
-      0,
-      objetivo.z - escarabajo.position.z
-    );
-  
-    const dist = dir.length();
-  
-    if (dist < 0.08) {
-      this.rutaEscarabajo.shift();
-      return;
-    }
-  
-    dir.normalize();
-  
-    const paso = this.velocidadEscarabajo * dt;
-    const nuevaX = escarabajo.position.x + dir.x * paso;
-    const nuevaZ = escarabajo.position.z + dir.z * paso;
-  
-    if (!this.laberinto.hayColision(nuevaX, nuevaZ, this.radioEscarabajo)) {
-      escarabajo.position.x = nuevaX;
-      escarabajo.position.z = nuevaZ;
-    } else {
-      // Si se queda atascado, forzamos recálculo rápido.
-      this.timerRutaEscarabajo = this.recalcularRutaEscarabajoCada;
-    }
-  
-    // Orientar hacia la dirección de movimiento.
-    // Si tu modelo mira al revés, añade + Math.PI.
-    escarabajo.rotation.y = Math.atan2(dir.x, dir.z);
-  
-    this.comprobarContactoEscarabajo();
-  }
-
-  setAnimacionesEscarabajo(activas) {
-    if (!this.pickupEscarabajo) return;
-  
-    const escarabajo = this.pickupEscarabajo.objeto;
-  
-    escarabajo.animaciones = activas;
-  
-    if (escarabajo.guiControls) {
-      escarabajo.guiControls.animaciones = activas;
-  
-      if (escarabajo.guiControls.velMarcha !== undefined) {
-        escarabajo.guiControls.velMarcha = activas ? 3.0 : 0.0;
-      }
-  
-      if (escarabajo.guiControls.velAlas !== undefined) {
-        escarabajo.guiControls.velAlas = activas ? 1.6 : 0.0;
-      }
-    }
-  }
-  
-  comprobarContactoEscarabajo() {
-    if (this.gameOver) return;
-    if (!this.pickupEscarabajo) return;
-    if (this.pickupEscarabajo.recogido) return;
-  
-    // Si ya tienes la daga, tocarlo no mata.
-    if (this.inventario.daga) return;
-  
-    const escarabajo = this.pickupEscarabajo.objeto;
-  
-    const dx = this.camera.position.x - escarabajo.position.x;
-    const dz = this.camera.position.z - escarabajo.position.z;
-    const dist = Math.sqrt(dx * dx + dz * dz);
-  
-    if (dist < this.distanciaMuerteEscarabajo) {
-      this.matarJugador('El escarabajo te ha alcanzado.');
-    }
-  }
-  
-  matarJugador(motivo) {
-    if (this.gameOver) return;
-  
-    this.gameOver = true;
-    this.escarabajoActivo = false;
-    this.setAnimacionesEscarabajo(false);
-  
-    if (this.controls && this.controls.isLocked) {
-      this.controls.unlock();
-    }
-  
-    this.mostrarMensaje(motivo + ' Has muerto. Reiniciando...');
-  
-    clearTimeout(this._timerReinicio);
-    this._timerReinicio = setTimeout(() => {
-      this.reiniciarPartida();
-    }, 2200);
-  }
-
-  reiniciarPartida() {
-    clearTimeout(this._timerReinicio);
-  
-    this.gameOver = false;
-    this.reiniciando = false;
-    this.todosRecogidos = false;
-  
-    this.rutaEscarabajo = [];
-    this.timerRutaEscarabajo = 0;
-  
-    // Reset inventario
-    Object.keys(this.inventario).forEach((id) => {
-      this.inventario[id] = false;
-    });
-  
-    // Reset pickups
-    this.pickups.forEach((pickup) => {
-      pickup.recogido = false;
-      pickup.objeto.visible = true;
-  
-      if (pickup.posicionInicial) {
-        pickup.objeto.position.copy(pickup.posicionInicial);
-      }
-  
-      if (pickup.rotacionInicial) {
-        pickup.objeto.rotation.copy(pickup.rotacionInicial);
-      }
-  
-      if (pickup.escalaInicial) {
-        pickup.objeto.scale.copy(pickup.escalaInicial);
-      }
-    });
-  
-    // Reset escarabajo perseguidor
-    if (this.pickupEscarabajo) {
-      this.pickupEscarabajo.objeto.visible = true;
-  
-      if (this.posicionInicialEscarabajo) {
-        this.pickupEscarabajo.objeto.position.copy(this.posicionInicialEscarabajo);
-      }
-  
-      this.pickupEscarabajo.objeto.rotation.y = this.rotacionInicialEscarabajoY || 0;
-  
-      this.escarabajoActivo = this.guiControls.escarabajoPersigue;
-      this.setAnimacionesEscarabajo(this.escarabajoActivo);
-    }
-  
-    // Reset puerta
-    if (this.puerta) {
-      this.puerta.estado = 'cerrada';
-      this.puerta.temblor = 0;
-      this.puerta.anguloActual = 0;
-  
-      if (this.puerta.pivote) {
-        this.puerta.pivote.rotation.set(0, 0, 0);
-      }
-    }
-  
-    // Reset jugador
-    if (this.posicionInicialJugador) {
-      this.camera.position.copy(this.posicionInicialJugador);
-    } else {
-      this.camera.position.copy(this.laberinto.getPosicionInicial());
-    }
-  
-    this.camera.position.y = 1.75;
-  
-    // Limpiar teclas para que no arranque moviéndose
-    this.teclas.w = false;
-    this.teclas.s = false;
-    this.teclas.a = false;
-    this.teclas.d = false;
-  
-    this.actualizarInventario();
-    this.mostrarMensaje('Partida reiniciada. Vuelve a intentarlo.');
-  }
-  
  
   // ── MENSAJE EN PANTALLA  ─────────────────────────────────
   mostrarMensaje(texto) {
@@ -943,13 +490,15 @@ class MyScene extends THREE.Scene {
       this._timerMensaje = setTimeout(() => { elem.innerHTML = ''; }, 3000);
     }
   }
- 
+
   // ── MOVIMIENTO DEL JUGADOR ────────────────────────────────────────────────────
   // Velocidad independiente del ordenador: e = v · Δt
-
-  moverJugador(dt) {
+  // Colisiones con Raycaster
+  
+  moverJugador() {
     if (!this.controls.isLocked) return;
-    if (this.gameOver) return;
+  
+    var dt = this.reloj.getDelta();
   
     // Dirección de mirada horizontal robusta.
     // No usamos directamente getDirection().y = 0 porque si miras
@@ -1064,7 +613,13 @@ class MyScene extends THREE.Scene {
     
     // Actualizar cámara ortográfica del minimapa
     if (this.camaraTop) {
-      this.configurarCamaraTop();
+      var tam = this.laberinto.mapa[0].length * this.laberinto.tamCelda / 2;
+      var ratio = window.innerWidth / window.innerHeight;
+      this.camaraTop.left   = -tam * ratio;
+      this.camaraTop.right  =  tam * ratio;
+      this.camaraTop.top    =  tam;
+      this.camaraTop.bottom = -tam;
+      this.camaraTop.updateProjectionMatrix();
     }
 
     // Y también el tamaño del renderizador
@@ -1073,34 +628,26 @@ class MyScene extends THREE.Scene {
 
   // ── UPDATE ────────────────────────────────────────────────────────────────────
   update() {
-    const dt = this.reloj.getDelta();
-  
-    // 1. Mover jugador
-    this.moverJugador(dt);
-  
-    // 2. Actualizar Tween
+    // 1. Mover jugador con detección de colisiones
+    this.moverJugador();
+ 
+    // 2. Actualizar Tween (PDF Animación p.19)
+    //    "Solo hay que llamarla una vez por frame"
     TWEEN.update();
-  
-    // 3. Actualizar puerta
+ 
+    // 3. Actualizar objetos animados
     this.puerta.update();
-  
-    // 4. Actualizar pickups
     this.pickups.forEach(p => {
-      if (!p.recogido && p.objeto.update) {
-        if (p.id === 'escarabajo' && this.inventario.daga) return;
-        p.objeto.update();
-      }
+      if (!p.recogido && p.objeto.update) p.objeto.update();
     });
-  
-    // 5. Actualizar escarabajo perseguidor
-    this.actualizarEscarabajoPerseguidor(dt);
-  
-    // 6. Render principal
+ 
+    // 4. Renderizar vista principal (pantalla completa)
     this.renderViewport(this.camera, 0, 0, 1, 1);
-  
-    // 7. Minimap
+ 
+    // 5. Renderizar minimapa (esquina inferiror derecha, 25% de pantalla)
     this.renderViewport(this.camaraTop, 0.75, 0, 0.25, 0.25);
-  
+ 
+    // 6. Siguiente frame
     requestAnimationFrame(() => this.update());
   }
 }
