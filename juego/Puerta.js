@@ -59,7 +59,7 @@ class Puerta extends THREE.Object3D {
     this.dims = this.getDims();
 
     // ── Construcción ────────────────────────────────────────────────────────
-    // El marco (pilares + dintel) se añade directamente a this
+    // El marco (pilares + dintel) 
     this.add(this.createMarco());
 
     // La hoja cuelga de un nodo pivote que está en el borde izquierdo
@@ -262,7 +262,7 @@ class Puerta extends THREE.Object3D {
     contenedor.add(meshPomo);
     contenedor.add(meshAnilla);
 
-    // Posición: lado derecho de la hoja, altura del pecho (~1.1m)
+    // Posición: lado derecho de la hoja, altura del pecho 
     // Como la hoja está en el pivote, las coordenadas son relativas a él
     contenedor.position.set(
       d.hojaMitadAncho * 1.6,   // lado derecho de la hoja
@@ -287,19 +287,6 @@ class Puerta extends THREE.Object3D {
       this.estado = 'temblando';
       this.temblor = 0;
     }
-  }
-
-  // Devuelve true si todos los pick-ups han sido recogidos
-  // Se llama desde MyScene antes de permitir la apertura
-  puedeAbrirse(pickupsRecogidos) {
-    return pickupsRecogidos;
-  }
-
-  // Devuelve la posición mundial del pomo para la detección de clic
-  getPosicionPomo() {
-    var pos = new THREE.Vector3();
-    this.pomo.getWorldPosition(pos);
-    return pos;
   }
 
   // ── UPDATE ─────────────────────────────────────────────────────────────────

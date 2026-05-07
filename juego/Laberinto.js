@@ -8,17 +8,6 @@ import * as THREE from 'three'
 //   · stone_normal.jpg   → mapa normal de la piedra (relieve)
 //   · floor_color.jpg    → color de las losas del suelo
 //   · floor_normal.jpg   → mapa normal del suelo
-//   · moss_color.jpg     → color del musgo/hierba
-//
-// Si no tienes las texturas aún, el laberinto funciona igualmente
-// con colores planos de fallback.
-//
-// Uso desde MyScene.js:
-//   this.laberinto = new Laberinto();
-//   this.add(this.laberinto);
-//   var posInicial = this.laberinto.getPosicionInicial();
-//   var posPuerta  = this.laberinto.getPosPuerta();
-//   var colisiona  = this.laberinto.hayColision(x, z, radio);
 // ─────────────────────────────────────────────────────────────────────────────
 
 class Laberinto extends THREE.Object3D {
@@ -50,7 +39,6 @@ class Laberinto extends THREE.Object3D {
     this.crearMateriales();
     this.crearParedes();
     this.crearSuelo();
-    //this.crearTecho();
   }
 
   // ── HELPER: cargar textura con fallback de color ──────────────────────────
@@ -172,17 +160,7 @@ class Laberinto extends THREE.Object3D {
     }
   }
 
-  // ── TECHO ──────────────────────────────────────────────────────────────────
-  crearTecho() {
-    var filas = this.mapa.length;
-    var cols  = this.mapa[0].length;
-    var t     = this.tamCelda;
-
-    var geo  = new THREE.BoxGeometry(cols * t, 0.2, filas * t);
-    var mesh = new THREE.Mesh(geo, this.matTecho);
-    mesh.position.set(0, this.altoPared + 0.1, 0);
-    this.add(mesh);
-  }
+  
 
   // ── UTILIDADES ─────────────────────────────────────────────────────────────
 
@@ -220,24 +198,6 @@ class Laberinto extends THREE.Object3D {
 
   getParedes() {
     return this.paredes;
-  }
-
-  hayColision(x, z, radio) {
-    var cajaJugador = new THREE.Box3(
-      new THREE.Vector3(x - radio, 0,   z - radio),
-      new THREE.Vector3(x + radio, 3.0, z + radio)
-    );
-    for (var i = 0; i < this.paredes.length; i++) {
-      this.paredes[i].bbox.setFromObject(this.paredes[i].mesh);
-      if (cajaJugador.intersectsBox(this.paredes[i].bbox)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  getTamCelda() {
-    return this.tamCelda;
   }
 
   update() {
