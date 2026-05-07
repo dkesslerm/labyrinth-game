@@ -84,18 +84,10 @@ class Escarabajo extends THREE.Object3D {
       cuerpoRY: 0.072,
       cuerpoRZ: 0.18,
 
-      pronotoRX: 0.088,
-      pronotoRY: 0.046,
-      pronotoRZ: 0.060,
-
       cabezaRX: 0.056,
       cabezaRY: 0.040,
       cabezaRZ: 0.050,
-
-      ojoRX: 0.010,
-      ojoRY: 0.006,
-      ojoRZ: 0.004,
-
+      
       colmilloLargo: 0.048,
       colmilloRadio: 0.006,
 
@@ -143,24 +135,19 @@ class Escarabajo extends THREE.Object3D {
     elitroGeo.rotateX(-Math.PI / 2);
   
     const outer = new THREE.Mesh(elitroGeo, this.matLapis);
-  
-    // Importante:
-    // No escalamos el pivote con scale.x = -1.
-    // Escalamos directamente el mesh para evitar ejes raros al animar.
+    
     outer.scale.set(
       lado * d.elitroAncho,
       d.elitroAlto,
       d.elitroLargo
     );
   
-    // Posición cerrada que ya estabas usando para los élitros.
     const posCerrada = new THREE.Vector3(
       -0.001,
       d.elitroLift,
       -0.008
     );
   
-    // Punto fijo de giro: detrás del cuello, donde empiezan las alas.
     // Este punto está en coordenadas locales del cuerpo.
     const puntoFijo = new THREE.Vector3(
       lado * d.cuerpoRX * 0.075,
@@ -181,7 +168,7 @@ class Escarabajo extends THREE.Object3D {
   }
 
   createCuerpo(d) {
-    const grupo = new THREE.Group();
+    const grupo = new THREE.Object3D();
   
     const cuerpo = new THREE.Mesh(
       this.createScaledSphere(d.cuerpoRX, d.cuerpoRY, d.cuerpoRZ, 40, 28),
@@ -199,38 +186,28 @@ class Escarabajo extends THREE.Object3D {
   }
 
   createOjo(d, lado) {
-    const grupo = new THREE.Group();
-  
+    const grupo = new THREE.Object3D();
+ 
     const baseOjo = d.cabezaRX * 0.165;
     const largoOjo = d.cabezaRZ * 0.185;
-  
+
     const x = lado * d.cabezaRX * 0.48;
-  
     const z = d.cabezaRZ * 0.58;
-  
     const val = 1.0 -
       (x * x) / (d.cabezaRX * d.cabezaRX) -
       (z * z) / (d.cabezaRZ * d.cabezaRZ);
-  
     const ySuperficie = d.cabezaRY * Math.sqrt(Math.max(0.0, val));
-  
     const offsetExterior = 0.0015;
   
-    grupo.position.set(
-      x,
-      ySuperficie + offsetExterior,
-      z
-    );
+    grupo.position.set(x, ySuperficie + offsetExterior, z);
   
     const normalCabeza = new THREE.Vector3(
       x / (d.cabezaRX * d.cabezaRX),
       ySuperficie / (d.cabezaRY * d.cabezaRY),
       z / (d.cabezaRZ * d.cabezaRZ)
     ).normalize();
-  
-    const dirFrontal = new THREE.Vector3(lado * 0.38, 0.10, 1.0).normalize();
-  
-    const dir = normalCabeza.clone().lerp(dirFrontal, 0.32).normalize();
+    
+    const dir = normalCabeza;
   
     const montaje = new THREE.Object3D();
     montaje.quaternion.setFromUnitVectors(
@@ -256,10 +233,7 @@ class Escarabajo extends THREE.Object3D {
     geoSurco.scale(1.0, 0.78, 1.0);
   
     const surco = new THREE.Mesh(geoSurco, this.matPata);
-  
-    // Un poco hundido respecto a la pirámide para que parezca incrustado.
-    surco.position.y = -0.0004;
-  
+    
     montaje.add(surco);
     montaje.add(ojo);
     grupo.add(montaje);
@@ -268,7 +242,7 @@ class Escarabajo extends THREE.Object3D {
   }
 
   createCabeza(d) {
-    const grupo = new THREE.Group();
+    const grupo = new THREE.Object3D();
   
     const cabeza = new THREE.Mesh(
       this.createScaledSphere(d.cabezaRX, d.cabezaRY, d.cabezaRZ, 28, 20),
@@ -365,7 +339,7 @@ class Escarabajo extends THREE.Object3D {
 
   createEscarabajo() {
     const d = this.getDims();
-    const grupo = new THREE.Group();
+    const grupo = new THREE.Object3D();
 
     this.legs = [];
     this.pivoteColmilloIzq = null;
@@ -446,12 +420,14 @@ class Escarabajo extends THREE.Object3D {
       leg.pivoteRodilla.rotation.z = leg.baseKnee + recoger * leg.lado * 0.26;
     });
 
+    // Animación colmillos
     const amp = this.guiControls.ampColmillo;
-    const angFauces = (Math.sin(t * 2.5) * 0.5 + 0.5) * amp;
+    const angColmillos = (Math.sin(t * 2.5) * 0.5 + 0.5) * amp;
 
-    if (this.pivoteColmilloIzq) this.pivoteColmilloIzq.rotation.y = angFauces;
-    if (this.pivoteColmilloDer) this.pivoteColmilloDer.rotation.y = -angFauces;
+    if (this.pivoteColmilloIzq) this.pivoteColmilloIzq.rotation.y = angColmillos;
+    if (this.pivoteColmilloDer) this.pivoteColmilloDer.rotation.y = -angColmillos;
 
+    // Animación elitros
     if (this.pivoteAlaIzq && this.pivoteAlaDer) {
       const velAlas = this.guiControls.velAlas;
       const ampAlas = this.guiControls.ampAlas;
@@ -462,10 +438,6 @@ class Escarabajo extends THREE.Object3D {
       this.pivoteAlaIzq.rotation.set(0, 0, 0);
       this.pivoteAlaDer.rotation.set(0, 0, 0);
     
-      // Apertura:
-      // - rotation.z levanta el borde exterior del élitro.
-      // - rotation.x le da un pequeño movimiento hacia atrás/arriba.
-      //
       // Los signos están invertidos entre lados para que abran simétricamente.
       this.pivoteAlaIzq.rotation.z = apertura * 0.70;
       this.pivoteAlaDer.rotation.z = -apertura * 0.70;
