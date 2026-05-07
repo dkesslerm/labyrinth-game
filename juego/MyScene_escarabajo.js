@@ -6,8 +6,8 @@ import { GUI } from "gui";
 import { PointerLockControls } from '../libs/PointerLockControls.js'
 import * as TWEEN from '../libs/tween.esm.js'
  
-import { Laberinto  } from './laberinto.js'
-import { Puerta     } from './puerta.js'
+import { Laberinto  } from './Laberinto.js'
+import { Puerta     } from './Puerta.js'
 import { Llave      } from './Llave.js'
 import { Daga       } from './Daga.js'
 import { Escarabajo } from './Escarabajo.js'

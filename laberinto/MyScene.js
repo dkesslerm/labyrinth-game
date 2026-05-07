@@ -7,7 +7,7 @@ import { TrackballControls } from "trackball";
 
 // Clases de mi proyecto
 
-import { Laberinto } from "./laberinto.js";
+import { Laberinto } from "./Laberinto.js";
 
 /// La clase fachada del modelo
 /**

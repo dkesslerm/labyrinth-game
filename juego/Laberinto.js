@@ -240,23 +240,6 @@ class Laberinto extends THREE.Object3D {
     return this.tamCelda;
   }
 
-  mundoACelda(x, z) {
-    var t = this.tamCelda;
-  
-    var col = Math.floor(x / t + this.mapa[0].length / 2);
-    var fila = Math.floor(z / t + this.mapa.length / 2);
-  
-    return { fila, col };
-  }
-  
-  esCeldaTransitable(fila, col) {
-    if (fila < 0 || fila >= this.mapa.length) return false;
-    if (col < 0 || col >= this.mapa[0].length) return false;
-  
-    // 1 = pared. 0, 2 y 3 son transitables.
-    return this.mapa[fila][col] !== 1;
-  }
-
   update() {
     // El laberinto es estático
   }

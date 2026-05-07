@@ -7,7 +7,7 @@ import { TrackballControls } from "trackball";
 
 // Clases de mi proyecto
 
-import { Puerta } from "./puerta.js";
+import { Puerta } from "./Puerta.js";
 
 /// La clase fachada del modelo
 /**

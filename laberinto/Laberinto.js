@@ -159,7 +159,7 @@ class Laberinto extends THREE.Object3D {
 
     for (var fila = 0; fila < filas; fila++) {
       for (var col = 0; col < cols; col++) {
-        var geo = new THREE.BoxGeometry(t - 0.05, 0.15, t - 0.05);
+        var geo = new THREE.BoxGeometry(t, 0.15, t);
         var mat = this.matSuelo;
         var mesh = new THREE.Mesh(geo, mat);
 

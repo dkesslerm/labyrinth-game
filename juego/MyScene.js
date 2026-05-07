@@ -6,8 +6,8 @@ import { GUI } from "gui";
 import { PointerLockControls } from '../libs/PointerLockControls.js'
 import * as TWEEN from '../libs/tween.esm.js'
  
-import { Laberinto  } from './laberinto.js'
-import { Puerta     } from './puerta.js'
+import { Laberinto  } from './Laberinto.js'
+import { Puerta     } from './Puerta.js'
 import { Llave      } from './Llave.js'
 import { Daga       } from './Daga.js'
 import { Escarabajo } from './Escarabajo.js'
@@ -61,7 +61,6 @@ class MyScene extends THREE.Scene {
     this.puerta.rotation.y = Math.PI;
     this.add(this.puerta);
 
-
     // ── Pick-ups: Cada entrada: { objeto: Object3D, recogido: false }
     this.pickups = [];
     this.inventario = {
@@ -74,6 +73,7 @@ class MyScene extends THREE.Scene {
     
     // Estado del juego
     this.todosRecogidos = false;
+    // this.llaveRecogida = false;
     
     this.crearInventario();
     this.crearPickups();
@@ -97,7 +97,9 @@ class MyScene extends THREE.Scene {
     this.registrarEventos();
   }
 
-  // ── RENDERER ─────────────────────────────────────────────────────────────────
+  // --- CONFIGURACIÓN -------------------------------
+  
+  // Renderer
   createRenderer(myCanvas) {
     var renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setClearColor(new THREE.Color(0x111111), 1.0);
@@ -107,8 +109,7 @@ class MyScene extends THREE.Scene {
     $(myCanvas).append(renderer.domElement);
     return renderer;
   }
-
-
+  
   createCamera() {
     // Para crear una cámara le indicamos
     //   El ángulo del campo de visión vértical en grados sexagesimales
@@ -143,7 +144,6 @@ class MyScene extends THREE.Scene {
     this.camaraTop.position.set(0, 50, 0);
     this.camaraTop.lookAt(0, 0, 0);
     this.add(this.camaraTop);
-
   }
 
   configurarCamaraTop() {
@@ -207,7 +207,8 @@ class MyScene extends THREE.Scene {
   
     return gui;
   }
-
+  
+  // Se crean las luces y se añaden en la createCamera() para que se muevan con ella
   createLights() {
     // Se crea una luz ambiental, evita que se vean complentamente negras las zonas donde no incide de manera directa una fuente de luz
     // La luz ambiental solo tiene un color y una intensidad
@@ -231,11 +232,9 @@ class MyScene extends THREE.Scene {
 
     // El target también debe colgar de la cámara y apuntar hacia delante
     this.spotLight.target.position.set(0, 0, -1);
-
-    //se añaden en la createCamera() para que se muevan con ella
   }
 
-  // ── CREACIÓN DE PICKUPS ──────────────────────────────────────────────────────
+  // ── TODO RELATIVO A LOS PICKUPS ──────────────────────────────────────────────────────
 
   // Necesitamos una GUI de juguete para que las GUI de cada picukp individual no 
   // aparezcan en la GUI del juego. 
@@ -309,7 +308,7 @@ class MyScene extends THREE.Scene {
         nombre: 'Llave',
         icono: '🔑',
         Clase: Llave,
-        fila: 8,
+        fila: 1,
         col: 8,
         escala: 3.0,
         rotY: Math.PI * 0.5,
@@ -352,6 +351,38 @@ class MyScene extends THREE.Scene {
       recogido: false,
     });
   }
+  
+   recogerPickup(pickup) {
+     if (pickup.recogido) return;
+   
+     pickup.recogido = true;
+     pickup.objeto.visible = false;
+   
+     this.inventario[pickup.id] = true;
+   
+     const recogidos = this.pickups.filter(p => p.recogido).length;
+     const total = this.pickups.length;
+   
+     if (pickup.id === 'llave') {
+       this.mostrarMensaje(`Llave recogida (${recogidos}/${total}).`);
+       // this.llaveRecogida = true;
+     } else if (pickup.id === 'gema') {
+       this.mostrarMensaje(`Gema recogida (${recogidos}/${total}).`);
+     } else {
+       this.mostrarMensaje(`${pickup.nombre} recogido (${recogidos}/${total}).`);       
+     }
+   
+     if (this.todosLosPickupsRecogidos()) {
+       this.todosRecogidos = true;
+       this.mostrarMensaje('¡Todos los artefactos recogidos! Encuentra la salida.');
+     }
+   
+     this.actualizarInventario();
+   }
+ 
+   todosLosPickupsRecogidos() {
+     return this.pickups.length > 0 && this.pickups.every(p => p.recogido);
+   }
 
   // ── INVENTARIO ───────────────────────────────────────────────────────────────
   crearInventario() {
@@ -413,11 +444,11 @@ class MyScene extends THREE.Scene {
 
   // ── EVENTOS ───────────────────────────────────────────────────────────────────
   registrarEventos() {
-    // ── Teclado  ──────────────────────────────────────
+    // Teclado
     window.addEventListener('keydown', (e) => this.onKeyDown(e));
     window.addEventListener('keyup',   (e) => this.onKeyUp(e));
  
-    // ── Ratón: click para recoger/abrir  ────────────
+    // Ratón
     document.addEventListener('mousedown', (e) => this.onMouseDown(e));
 
     this.renderer.domElement.addEventListener('click', () => {
@@ -471,7 +502,6 @@ class MyScene extends THREE.Scene {
     if (!this.controls.isLocked) return;
  
     // En primera persona el jugador siempre mira al centro de pantalla
-    // → el rayo sale desde (0,0) en NDC
     this.vecMouse.set(0, 0);
     this.raycaster.setFromCamera(this.vecMouse, this.camera);
  
@@ -479,6 +509,7 @@ class MyScene extends THREE.Scene {
     var impactosPuerta = this.raycaster.intersectObject(this.puerta, true);
     
     if (impactosPuerta.length > 0) {
+      // if (this.llaveRecogida)
       if (this.todosLosPickupsRecogidos()) {
         this.todosRecogidos = true;
         this.puerta.iniciarApertura();
@@ -514,36 +545,6 @@ class MyScene extends THREE.Scene {
         this.recogerPickup(pickup);
       }
     }
-  }
- 
-  // ── RECOGER PICK-UP ───────────────────────────────────────────────────────────
-  recogerPickup(pickup) {
-    if (pickup.recogido) return;
-  
-    pickup.recogido = true;
-    pickup.objeto.visible = false;
-  
-    this.inventario[pickup.id] = true;
-  
-    const recogidos = this.pickups.filter(p => p.recogido).length;
-    const total = this.pickups.length;
-  
-    if (pickup.id === 'llave') {
-      this.mostrarMensaje(`Llave recogida (${recogidos}/${total}).`);
-    } else {
-      this.mostrarMensaje(`${pickup.nombre} recogido (${recogidos}/${total}).`);
-    }
-  
-    if (this.todosLosPickupsRecogidos()) {
-      this.todosRecogidos = true;
-      this.mostrarMensaje('¡Todos los artefactos recogidos! Encuentra la salida.');
-    }
-  
-    this.actualizarInventario();
-  }
-
-  todosLosPickupsRecogidos() {
-    return this.pickups.length > 0 && this.pickups.every(p => p.recogido);
   }
  
   // ── MENSAJE EN PANTALLA  ─────────────────────────────────
@@ -798,7 +799,7 @@ class MyScene extends THREE.Scene {
   }
 }
 
-/// La función   main
+/// La función main
 $(function () {
   // Se instancia la escena pasándole el  div  que se ha creado en el html para visualizar
   var scene = new MyScene("#WebGL-output");
