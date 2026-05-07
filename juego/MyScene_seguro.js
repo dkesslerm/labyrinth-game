@@ -4,7 +4,6 @@
 import * as THREE from "three";
 import { GUI } from "gui";
 import { PointerLockControls } from '../libs/PointerLockControls.js'
-import * as TWEEN from '../libs/tween.esm.js'
  
 import { Laberinto  } from './Laberinto.js'
 import { Puerta     } from './Puerta.js'
@@ -90,7 +89,6 @@ class MyScene extends THREE.Scene {
     this.vecMouse      = new THREE.Vector2();
     
     //Vectores reutilizables para colisiones
-    this.posJugador  = new THREE.Vector3();
     this.dirMirada   = new THREE.Vector3();
 
     //Eventos
@@ -529,17 +527,10 @@ class MyScene extends THREE.Scene {
  
     if (impactos.length > 0) {
       var meshClicado = impactos[0].object;
- 
-      // Usamos userData para acceder a la raíz del pick-up
-      // En cada Mesh de los pick-ups, userData debe apuntar al Object3D raíz
-      var raiz = meshClicado.userData || meshClicado;
- 
+      
       // Buscamos el pick-up cuya jerarquía contiene el mesh clicado
-      var pickup = this.pickups.find(p => {
-        var enc = false;
-        p.objeto.traverse((n) => { if (n === meshClicado) enc = true; });
-        return enc;
-      });
+      const id = meshClicado.userData.pickupId;
+      const pickup = this.pickups.find(p => p.id === id);
  
       if (pickup && !pickup.recogido) {
         this.recogerPickup(pickup);
@@ -775,26 +766,22 @@ class MyScene extends THREE.Scene {
 
   // ── UPDATE ────────────────────────────────────────────────────────────────────
   update() {
-    // 1. Mover jugador con detección de colisiones
+    // Mover jugador con detección de colisiones
     this.moverJugador();
  
-    // 2. Actualizar Tween (PDF Animación p.19)
-    //    "Solo hay que llamarla una vez por frame"
-    TWEEN.update();
- 
-    // 3. Actualizar objetos animados
+    // Actualizar objetos animados
     this.puerta.update();
     this.pickups.forEach(p => {
       if (!p.recogido && p.objeto.update) p.objeto.update();
     });
  
-    // 4. Renderizar vista principal (pantalla completa)
+    // Renderizar vista principal (pantalla completa)
     this.renderViewport(this.camera, 0, 0, 1, 1);
  
-    // 5. Renderizar minimapa (esquina inferiror derecha, 25% de pantalla)
+    // Renderizar minimapa (esquina inferiror derecha, 25% de pantalla)
     this.renderMinimapa();
     
-    // 6. Siguiente frame
+    // Siguiente frame
     requestAnimationFrame(() => this.update());
   }
 }
