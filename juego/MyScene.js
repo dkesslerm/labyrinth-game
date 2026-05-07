@@ -89,7 +89,6 @@ class MyScene extends THREE.Scene {
     this.vecMouse      = new THREE.Vector2();
     
     //Vectores reutilizables para colisiones
-    this.posJugador  = new THREE.Vector3();
     this.dirMirada   = new THREE.Vector3();
 
     //Eventos
@@ -528,17 +527,10 @@ class MyScene extends THREE.Scene {
  
     if (impactos.length > 0) {
       var meshClicado = impactos[0].object;
- 
-      // Usamos userData para acceder a la raíz del pick-up
-      // En cada Mesh de los pick-ups, userData debe apuntar al Object3D raíz
-      var raiz = meshClicado.userData || meshClicado;
- 
+      
       // Buscamos el pick-up cuya jerarquía contiene el mesh clicado
-      var pickup = this.pickups.find(p => {
-        var enc = false;
-        p.objeto.traverse((n) => { if (n === meshClicado) enc = true; });
-        return enc;
-      });
+      const id = meshClicado.userData.pickupId;
+      const pickup = this.pickups.find(p => p.id === id);
  
       if (pickup && !pickup.recogido) {
         this.recogerPickup(pickup);
