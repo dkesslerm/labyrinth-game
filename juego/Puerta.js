@@ -75,10 +75,15 @@ class Puerta extends THREE.Object3D {
     this.pivote.add(this.createAnilla());
 
     // ── Estado de animación ─────────────────────────────────────────────────
-    this.estado = 'cerrada';   // 'cerrada' | 'temblando' | 'abriendo' | 'abierta'
-    this.temblor = 0;          // contador interno del temblor
-    this.anguloActual = 0;     // ángulo actual de apertura (radianes)
-    this.anguloObjetivo = -Math.PI / 2;  // 90° de apertura
+    this.estado = 'cerrada';
+    this.temblor = 0;
+    this.tiempoTemblor = 0;
+    this.duracionTemblor = 1.0;
+    this.anguloActual = 0;
+    this.anguloObjetivo = -Math.PI / 2;
+    this.velocidadApertura = 2.2;
+    
+    this.reloj = new THREE.Clock();
   }
 
   // ── GUI ────────────────────────────────────────────────────────────────────
@@ -286,32 +291,41 @@ class Puerta extends THREE.Object3D {
     if (this.estado === 'cerrada') {
       this.estado = 'temblando';
       this.temblor = 0;
+      this.tiempoTemblor = 0;
+      this.reloj.getDelta();
     }
   }
 
   // ── UPDATE ─────────────────────────────────────────────────────────────────
   update() {
+    const dt = Math.min(this.reloj.getDelta(), 0.05);
+  
     switch (this.estado) {
-
+  
       case 'temblando':
-        // Vibración rápida en Z durante ~60 frames
-        this.temblor++;
-        this.pivote.rotation.z = Math.sin(this.temblor * 0.8) * 0.03;
-
-        if (this.temblor > 60) {
+        this.tiempoTemblor += dt;
+  
+        // Vibración rápida en Z durante duracionTemblor segundos
+        this.pivote.rotation.z = Math.sin(this.tiempoTemblor * 40.0) * 0.03;
+  
+        if (this.tiempoTemblor > this.duracionTemblor) {
           this.pivote.rotation.z = 0;
           this.estado = 'abriendo';
         }
         break;
-
+  
       case 'abriendo':
-        // Rotación suave hacia el ángulo objetivo
-        // Velocidad progresiva: empieza lento, acelera, frena al final
         var diferencia = this.anguloObjetivo - this.anguloActual;
-
+  
         if (Math.abs(diferencia) > 0.001) {
-          // Interpolación suave (easing)
-          this.anguloActual += diferencia * 0.04;
+          const paso = this.velocidadApertura * dt;
+  
+          if (Math.abs(diferencia) <= paso) {
+            this.anguloActual = this.anguloObjetivo;
+          } else {
+            this.anguloActual += Math.sign(diferencia) * paso;
+          }
+  
           this.pivote.rotation.y = this.anguloActual;
         } else {
           this.anguloActual = this.anguloObjetivo;
@@ -319,10 +333,9 @@ class Puerta extends THREE.Object3D {
           this.estado = 'abierta';
         }
         break;
-
+  
       case 'abierta':
       case 'cerrada':
-        // Nada que actualizar
         break;
     }
   }

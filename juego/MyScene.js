@@ -504,7 +504,7 @@ class MyScene extends THREE.Scene {
     this.raycaster.setFromCamera(this.vecMouse, this.camera);
  
     // ── Comprobar clic en el pomo de la puerta ────────────────────────────
-    var impactosPuerta = this.raycaster.intersectObject(this.puerta, true);
+    var impactosPuerta = this.raycaster.intersectObject(this.puerta.pomo, true);
     
     if (impactosPuerta.length > 0) {
       // if (this.llaveRecogida)

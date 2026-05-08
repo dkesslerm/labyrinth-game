@@ -59,7 +59,7 @@ class Puerta extends THREE.Object3D {
     this.dims = this.getDims();
 
     // ── Construcción ────────────────────────────────────────────────────────
-    // El marco (pilares + dintel) se añade directamente a this
+    // El marco (pilares + dintel) 
     this.add(this.createMarco());
 
     // La hoja cuelga de un nodo pivote que está en el borde izquierdo
@@ -75,10 +75,15 @@ class Puerta extends THREE.Object3D {
     this.pivote.add(this.createAnilla());
 
     // ── Estado de animación ─────────────────────────────────────────────────
-    this.estado = 'cerrada';   // 'cerrada' | 'temblando' | 'abriendo' | 'abierta'
-    this.temblor = 0;          // contador interno del temblor
-    this.anguloActual = 0;     // ángulo actual de apertura (radianes)
-    this.anguloObjetivo = -Math.PI / 2;  // 90° de apertura
+    this.estado = 'cerrada';
+    this.temblor = 0;
+    this.tiempoTemblor = 0;
+    this.duracionTemblor = 1.0;
+    this.anguloActual = 0;
+    this.anguloObjetivo = -Math.PI / 2;
+    this.velocidadApertura = 2.2;
+    
+    this.reloj = new THREE.Clock();
   }
 
   // ── GUI ────────────────────────────────────────────────────────────────────
@@ -262,7 +267,7 @@ class Puerta extends THREE.Object3D {
     contenedor.add(meshPomo);
     contenedor.add(meshAnilla);
 
-    // Posición: lado derecho de la hoja, altura del pecho (~1.1m)
+    // Posición: lado derecho de la hoja, altura del pecho 
     // Como la hoja está en el pivote, las coordenadas son relativas a él
     contenedor.position.set(
       d.hojaMitadAncho * 1.6,   // lado derecho de la hoja
@@ -286,45 +291,41 @@ class Puerta extends THREE.Object3D {
     if (this.estado === 'cerrada') {
       this.estado = 'temblando';
       this.temblor = 0;
+      this.tiempoTemblor = 0;
+      this.reloj.getDelta();
     }
-  }
-
-  // Devuelve true si todos los pick-ups han sido recogidos
-  // Se llama desde MyScene antes de permitir la apertura
-  puedeAbrirse(pickupsRecogidos) {
-    return pickupsRecogidos;
-  }
-
-  // Devuelve la posición mundial del pomo para la detección de clic
-  getPosicionPomo() {
-    var pos = new THREE.Vector3();
-    this.pomo.getWorldPosition(pos);
-    return pos;
   }
 
   // ── UPDATE ─────────────────────────────────────────────────────────────────
   update() {
+    const dt = Math.min(this.reloj.getDelta(), 0.05);
+  
     switch (this.estado) {
-
+  
       case 'temblando':
-        // Vibración rápida en Z durante ~60 frames
-        this.temblor++;
-        this.pivote.rotation.z = Math.sin(this.temblor * 0.8) * 0.03;
-
-        if (this.temblor > 60) {
+        this.tiempoTemblor += dt;
+  
+        // Vibración rápida en Z durante duracionTemblor segundos
+        this.pivote.rotation.z = Math.sin(this.tiempoTemblor * 40.0) * 0.03;
+  
+        if (this.tiempoTemblor > this.duracionTemblor) {
           this.pivote.rotation.z = 0;
           this.estado = 'abriendo';
         }
         break;
-
+  
       case 'abriendo':
-        // Rotación suave hacia el ángulo objetivo
-        // Velocidad progresiva: empieza lento, acelera, frena al final
         var diferencia = this.anguloObjetivo - this.anguloActual;
-
+  
         if (Math.abs(diferencia) > 0.001) {
-          // Interpolación suave (easing)
-          this.anguloActual += diferencia * 0.04;
+          const paso = this.velocidadApertura * dt;
+  
+          if (Math.abs(diferencia) <= paso) {
+            this.anguloActual = this.anguloObjetivo;
+          } else {
+            this.anguloActual += Math.sign(diferencia) * paso;
+          }
+  
           this.pivote.rotation.y = this.anguloActual;
         } else {
           this.anguloActual = this.anguloObjetivo;
@@ -332,10 +333,9 @@ class Puerta extends THREE.Object3D {
           this.estado = 'abierta';
         }
         break;
-
+  
       case 'abierta':
       case 'cerrada':
-        // Nada que actualizar
         break;
     }
   }
