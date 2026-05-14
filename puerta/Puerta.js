@@ -17,7 +17,19 @@ class Puerta extends THREE.Object3D {
     super();
 
     this.createGUI(gui, titleGui);
+    
+    var loader = new THREE.TextureLoader();
 
+    var texColor = loader.load('../imgs/puerta_color.jpg');
+    texColor.wrapS = THREE.RepeatWrapping;
+    texColor.wrapT = THREE.RepeatWrapping;
+    texColor.repeat.set(2, 2);
+
+    var texNormal = loader.load('../imgs/puerta_normal.jpg');
+    texNormal.wrapS = THREE.RepeatWrapping;
+    texNormal.wrapT = THREE.RepeatWrapping;
+    texNormal.repeat.set(2, 2);
+    
     // ── Materiales ──────────────────────────────────────────────────────────
 
     // Piedra antigua: gris cálido, rugosa, sin reflejo metálico
@@ -29,32 +41,27 @@ class Puerta extends THREE.Object3D {
 
     // Madera oscura: caoba envejecida
     this.matMadera = new THREE.MeshStandardMaterial({
-      color:     '#3D2010',
+      map: texColor,
+      normalMap: texNormal,
+      color: '#3D2010',
       metalness: 0.0,
       roughness: 0.85,
     });
 
     // Metal envejecido: hierro oxidado para los herrajes
     this.matMetal = new THREE.MeshStandardMaterial({
-      color:     '#4A3828',
+      color: '#4A3828',
       metalness: 0.7,
       roughness: 0.6,
     });
 
     // Metal dorado: para la anilla/pomo
     this.matOro = new THREE.MeshStandardMaterial({
-      color:     '#B8860B',
+      color: '#B8860B',
       metalness: 0.9,
       roughness: 0.2,
     });
-
-    // Runa: piedra clara grabada, contrasta con el pilar
-    this.matRuna = new THREE.MeshStandardMaterial({
-      color:     '#C8B89A',
-      metalness: 0.0,
-      roughness: 0.8,
-    });
-
+    
     // ── Dimensiones ─────────────────────────────────────────────────────────
     this.dims = this.getDims();
 
