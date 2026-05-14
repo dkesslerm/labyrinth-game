@@ -401,10 +401,10 @@ class Escarabajo extends THREE.Object3D {
   update() {
     if (!this.animaciones) return;
 
-    const t = this.reloj.getElapsedTime();
-    const dt = t - (this._tAnterior || 0);
-    this._tAnterior = t;
-    
+    const dt = this.reloj.getDelta();
+    this.t += dt;
+
+    const t = this.t;
     const vel = this.guiControls.velMarcha;
     const fases = [Math.PI, 0, 0, Math.PI, Math.PI, 0];
 
@@ -453,7 +453,8 @@ class Escarabajo extends THREE.Object3D {
     }
 
     // Luz pulsante
-    this.luzInterna.intensity = 1.2 + Math.sin(t * 4) * 0.6;
+    const tiempo = this.reloj.getElapsedTime();
+    this.luzInterna.intensity = 1.2 + Math.sin(tiempo * 4) * 0.6;
   }
 }
 

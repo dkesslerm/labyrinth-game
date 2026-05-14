@@ -96,15 +96,6 @@ class Laberinto extends THREE.Object3D {
       metalness:   0.0,
       color:       '#E8E0D0'
     });
-
-    // ── Techo ─────────────────────────────────────────────────────────────
-    this.matTecho = new THREE.MeshStandardMaterial({
-      map:      this.cargarTextura('../imgs/stone_color.jpg', 1, 1),
-      roughness: 1.0,
-      metalness: 0.0,
-      color:    '#2A2420'
-    });
-
   }
 
   // ── PAREDES ────────────────────────────────────────────────────────────────
