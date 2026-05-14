@@ -290,8 +290,8 @@ class MyScene extends THREE.Scene {
         nombre: 'Daga',
         icono: '🗡️',
         Clase: Daga,
-        fila: 1,
-        col: 3,
+        fila: 5,
+        col: 6,
         escala: 2.0,
         rotY: Math.PI * 0.25,
       },
@@ -300,10 +300,10 @@ class MyScene extends THREE.Scene {
         nombre: 'Escarabajo',
         icono: '🪲',
         Clase: Escarabajo,
-        fila: 5,
-        col: 6,
+        fila: 1,
+        col: 3,
         escala: 2.2,
-        rotY: Math.PI,
+        rotY: 0,
       },
       {
         id: 'sombrero',
@@ -377,6 +377,12 @@ class MyScene extends THREE.Scene {
    recogerPickup(pickup) {
      if (pickup.recogido) return;
    
+     // El escarabajo requiere tener la daga primero
+     if (pickup.id === 'escarabajo' && !this.inventario.daga) {
+       this.mostrarMensaje('Necesitas la daga para atrapar al escarabajo.');
+       return;
+     }   
+     
      pickup.recogido = true;
      pickup.objeto.visible = false;
    
