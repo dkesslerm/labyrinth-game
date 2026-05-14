@@ -1,24 +1,6 @@
 import * as THREE from 'three'
 import * as CSG from '../libs/three-bvh-csg.js'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Botón pulsable
-//
-// Piezas:
-//   · Base:  caja rectangular de metal, empotrada en la pared o en el suelo
-//   · Capuchón: la tecla propiamente dicha (CSG: cilindro + esfera rebajada)
-//
-// Jerarquía:
-//   Boton (Object3D)
-//     └─ base (Mesh)           ← cuerpo metálico
-//     └─ pivoteCapuchon (Object3D)   ← se desplaza en Y al pulsar
-//           └─ capuchon (Mesh)
-//
-// Animación (igual que Puerta.js):
-//   Estado 'reposo'  → 'pulsando' (hundimiento) → 'soltando' (vuelta) → 'reposo'
-//   Controlado por update() con THREE.Clock
-// ─────────────────────────────────────────────────────────────────────────────
-
 class Boton extends THREE.Object3D {
   constructor(gui, titleGui) {
     super();
@@ -32,13 +14,6 @@ class Boton extends THREE.Object3D {
       color:     '#3A3A3A',
       metalness: 0.85,
       roughness: 0.45,
-    });
-
-    // Marco biselado: cobre envejecido
-    this.matMarco = new THREE.MeshStandardMaterial({
-      color:     '#7C4A1A',
-      metalness: 0.75,
-      roughness: 0.35,
     });
 
     // Capuchón: color configurable desde la GUI
