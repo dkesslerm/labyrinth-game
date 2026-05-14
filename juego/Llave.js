@@ -9,7 +9,18 @@ class Llave extends THREE.Object3D {
     this.createGUI(gui, titleGui);
 
     // Materiales: uno para el cuerpo de la llave y otro para la gema
-    this.materialLlave = new THREE.MeshStandardMaterial({ color: this.guiControls.colorLlave });
+    var loader = new THREE.TextureLoader();
+    var texColor = loader.load('../imgs/llave_color.jpg');
+    texColor.wrapS = THREE.RepeatWrapping;
+    texColor.wrapT = THREE.RepeatWrapping;
+    texColor.repeat.set(2, 2);
+
+    this.materialLlave = new THREE.MeshStandardMaterial({
+        map:       texColor,              // canal de color
+        color:     this.guiControls.colorLlave,  // tinte dorado multiplicativo
+        metalness: 0.9,
+        roughness: 0.2,
+    });
     this.materialGema  = new THREE.MeshPhysicalMaterial({
         color: this.guiControls.colorGema,
         roughness: 0.04,
