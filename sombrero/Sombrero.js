@@ -11,9 +11,16 @@ class Sombrero extends THREE.Object3D {
     super(); 
     
     this.createGUI(gui, titleGui);
+    // Materiales: uno para el cuerpo de la llave y otro para la gema
+    var loader = new THREE.TextureLoader();
+    var texColor = loader.load('../imgs/hat_color.jpg');
+    texColor.wrapS = THREE.RepeatWrapping;
+    texColor.wrapT = THREE.RepeatWrapping;
+    texColor.repeat.set(2, 2);
     
     // Materiales
     this.hatMat = new THREE.MeshStandardMaterial({
+      map: texColor,
       color: 0x6A4528,
       roughness: 0.95,
       metalness: 0.02,

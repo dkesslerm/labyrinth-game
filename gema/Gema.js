@@ -11,7 +11,14 @@ class Gema extends THREE.Object3D {
 
     this.createGUI(gui, titleGui);
 
+    var loader = new THREE.TextureLoader();
+    var texColor = loader.load('../imgs/gema_color.jpg');
+    texColor.wrapS = THREE.RepeatWrapping;
+    texColor.wrapT = THREE.RepeatWrapping;
+    texColor.repeat.set(2, 2);
+
     this.matGemaPrincipal = new THREE.MeshPhysicalMaterial({
+      map: texColor,
       color:               0x22dd55,
       emissive:            0x005522,
       emissiveIntensity:   0.4,

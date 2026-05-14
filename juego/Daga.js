@@ -12,14 +12,14 @@ class Daga extends THREE.Object3D {
     // HOJA: acero pulido. Alta metalicidad, muy baja rugosidad para
     // que refleje la luz y parezca afilada.
     this.materialHoja = new THREE.MeshPhysicalMaterial({
-      color:       '#D8E0E8',
-      metalness:   0.6,
-      roughness:   0.08,
-      clearcoat:       1.0,   // capa de barniz encima (como acero lacado)
+      color: '#D8E0E8',
+      metalness: 0.6,
+      roughness: 0.08,
+      clearcoat: 1.0,   // capa de barniz encima (como acero lacado)
       clearcoatRoughness: 0.1,
-      reflectivity:    1.0,
+      reflectivity: 1.0,
       side: THREE.DoubleSide,
-      ior:             2.5   // índice de refracción (vidrio = 1.5, diamante = 2.4)
+      ior: 2.5   // índice de refracción (vidrio = 1.5, diamante = 2.4)
     });
  
     // GUARDA: bronce/hierro. Metal pero más mate y oscuro que la hoja.
