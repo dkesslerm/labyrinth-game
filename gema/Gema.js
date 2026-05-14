@@ -47,9 +47,10 @@ class Gema extends THREE.Object3D {
       metalness: 0.0,
     });
 
-    const luzInterna = new THREE.PointLight(0x00ff44, 1.8, 2.0);
-    luzInterna.position.set(0, 0.05, 0);
-    this.add(luzInterna);
+    this.luzInterna = new THREE.PointLight(0x00ff44, 1.8, 2.0);
+    this.luzInterna.position.set(0, 0.05, 0);
+    this.add(this.luzInterna);
+    this.reloj = new THREE.Clock(); 
 
     this.add(this.createCristalCentral());
     this.add(this.createCristalesSecundarios());
@@ -175,7 +176,19 @@ class Gema extends THREE.Object3D {
     return grupo;
   }
 
-  update() {}
+  update() {
+      const tiempo = this.reloj.getElapsedTime();
+      
+      // El seno oscila entre -1 y 1. 
+      // Lo ajustamos para que oscile, por ejemplo, entre 0.5 y 2.0 de intensidad.
+      const baseIntensidad = 1.2;
+      const variacion = Math.sin(tiempo * 4) * 0.6; // El 4 es la velocidad
+      
+      this.luzInterna.intensity = baseIntensidad + variacion;
+  
+      // Opcional: Que el brillo del material también parpadee con la luz
+      this.matGemaPrincipal.emissiveIntensity = (baseIntensidad + variacion) * 0.2;
+  }
 }
 
 export { Gema };

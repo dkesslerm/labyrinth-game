@@ -5,13 +5,14 @@ import * as THREE from "three";
 import { GUI } from "gui";
 import { PointerLockControls } from '../libs/PointerLockControls.js'
  
-import { Laberinto  } from './Laberinto.js'
-import { Puerta     } from './Puerta.js'
-import { Llave      } from './Llave.js'
-import { Daga       } from './Daga.js'
+import { Laberinto } from './Laberinto.js'
+import { Puerta } from './Puerta.js'
+import { Llave } from './Llave.js'
+import { Daga } from './Daga.js'
 import { Escarabajo } from './Escarabajo.js'
-import { Sombrero   } from './Sombrero.js'
-import { Gema       } from './Gema.js'
+import { Sombrero } from './Sombrero.js'
+import { Gema } from './Gema.js'
+import { Boton } from './Boton.js'
 
 /// La clase fachada del modelo
 /**
@@ -60,6 +61,29 @@ class MyScene extends THREE.Scene {
     this.puerta.rotation.y = Math.PI;
     this.add(this.puerta);
 
+    // ── Botón en la pared de inicio (a espaldas del jugador) ────────────────
+    // El jugador empieza en fila 1, col 1. La pared norte está en fila 0, col 1.
+    // La cara sur de esa pared queda en z = -8 (centro de celda fila 0 es z = -9,
+    // más tamCelda/2 = 1.0 → z = -8). El botón se pega a esa cara.
+    const guiDummy = this.crearGUIDummy();
+    this.boton = new Boton(guiDummy, 'Boton');
+
+    // Posición: misma X que el inicio del jugador (-7), a la altura del pecho
+    this.boton.position.set(-7, 1.1, -8);
+
+    // Orientación: la base del botón es horizontal por defecto (cara superior en +Y).
+    // Lo rotamos 90° en X para que quede pegado a la pared vertical, con el
+    // capuchón apuntando hacia +Z (hacia el jugador).
+    this.boton.rotation.x = Math.PI / 2;
+
+    // Referencia al mesh del capuchón para el raycaster (igual que puerta.pomo)
+    // traverseamos para guardar userData en todos los descendientes
+    this.boton.traverse((nodo) => {
+      nodo.userData.esBoton = true;
+    });
+
+    this.add(this.boton);
+    
     // ── Pick-ups: Cada entrada: { objeto: Object3D, recogido: false }
     this.pickups = [];
     this.inventario = {
@@ -72,7 +96,7 @@ class MyScene extends THREE.Scene {
     
     // Estado del juego
     this.todosRecogidos = false;
-    // this.llaveRecogida = false;
+    this.modoDificil = false;
     
     this.crearInventario();
     this.crearPickups();
@@ -177,7 +201,7 @@ class MyScene extends THREE.Scene {
   
     this.guiControls = {
       luzAmbiente : 1.5,
-      luzFocal    : 100,
+      luzFocal    : 70,
       velocidadJugador: 5.0,
     };
   
@@ -361,13 +385,12 @@ class MyScene extends THREE.Scene {
      const recogidos = this.pickups.filter(p => p.recogido).length;
      const total = this.pickups.length;
    
-     if (pickup.id === 'llave') {
-       this.mostrarMensaje(`Llave recogida (${recogidos}/${total}).`);
-       // this.llaveRecogida = true;
-     } else if (pickup.id === 'gema') {
-       this.mostrarMensaje(`Gema recogida (${recogidos}/${total}).`);
+     if (pickup.id === 'sombrero') {
+       this.mostrarMensaje(`Sombrero recogido (${recogidos}/${total}).`);
+     } else if (pickup.id === 'escarabajo') {
+       this.mostrarMensaje(`Escarabajo recogido (${recogidos}/${total}).`);
      } else {
-       this.mostrarMensaje(`${pickup.nombre} recogido (${recogidos}/${total}).`);       
+       this.mostrarMensaje(`${pickup.nombre} recogida (${recogidos}/${total}).`);       
      }
    
      if (this.todosLosPickupsRecogidos()) {
@@ -490,8 +513,7 @@ class MyScene extends THREE.Scene {
     if (event.key === 'ArrowRight') this.teclas.d = false;
   }
  
-  // ── RATÓN: click (recoger pick-ups / abrir puerta) ────────────────────────────
-  // Usa Raycaster construido una sola vez
+  // ── RATÓN: click (recoger pick-ups / abrir puerta / pulsar botón) ─────────────
   onMouseDown(event) {
     // Solo botón izquierdo
     if ((event.which || event.button) !== 1) return;
@@ -502,6 +524,15 @@ class MyScene extends THREE.Scene {
     // En primera persona el jugador siempre mira al centro de pantalla
     this.vecMouse.set(0, 0);
     this.raycaster.setFromCamera(this.vecMouse, this.camera);
+
+    // ── Comprobar clic en el botón ────────────────────────────────────────
+    var impactosBoton = this.raycaster.intersectObject(this.boton.pivoteCapuchon, true);
+
+    if (impactosBoton.length > 0) {
+      this.boton.iniciarPulsacion();
+      this.onBotonPulsado();
+      return;
+    }
  
     // ── Comprobar clic en el pomo de la puerta ────────────────────────────
     var impactosPuerta = this.raycaster.intersectObject(this.puerta.pomo, true);
@@ -521,20 +552,33 @@ class MyScene extends THREE.Scene {
     }
  
     // ── Comprobar clic en pick-ups ────────────────────────────────────────
-    // intersectObjects busca en los objetos indicados y sus descendientes
     var objetos = this.pickups.filter(p => !p.recogido).map(p => p.objeto);
     var impactos = this.raycaster.intersectObjects(objetos, true);
  
     if (impactos.length > 0) {
       var meshClicado = impactos[0].object;
       
-      // Buscamos el pick-up cuya jerarquía contiene el mesh clicado
       const id = meshClicado.userData.pickupId;
       const pickup = this.pickups.find(p => p.id === id);
  
       if (pickup && !pickup.recogido) {
         this.recogerPickup(pickup);
       }
+    }
+  }
+
+  // ── ACCIÓN DEL BOTÓN ──────────────────────────────────────────────────────────
+  onBotonPulsado() {
+    this.modoDificil = !this.modoDificil;
+  
+    if (this.modoDificil) {
+      this.ambientLight.intensity = 0;
+      this.spotLight.power = 5;
+      this.mostrarMensaje('¡Modo difícil activado!');
+    } else {
+      this.ambientLight.intensity = this.guiControls.luzAmbiente;
+      this.spotLight.power = this.guiControls.luzFocal;
+      this.mostrarMensaje('Modo normal restaurado.');
     }
   }
  
@@ -771,10 +815,11 @@ class MyScene extends THREE.Scene {
  
     // Actualizar objetos animados
     this.puerta.update();
+    this.boton.update();
     this.pickups.forEach(p => {
       if (!p.recogido && p.objeto.update) p.objeto.update();
     });
- 
+
     // Renderizar vista principal (pantalla completa)
     this.renderViewport(this.camera, 0, 0, 1, 1);
  

@@ -26,6 +26,11 @@ class Llave extends THREE.Object3D {
     // Se construye la llave completa y se añade a this
     var llave = this.createLlave();
     this.add(llave);
+
+    this.reloj = new THREE.Clock();
+    this.luzInterna = new THREE.PointLight(0xD4A843, 1.5, 1.5);
+    this.luzInterna.position.set(0, -0.05, 0);
+    this.add(this.luzInterna);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -199,7 +204,8 @@ class Llave extends THREE.Object3D {
   }
 
   update() {
-    // Sin animación propia;
+    const tiempo = this.reloj.getElapsedTime();
+    this.luzInterna.intensity = 1.2 + Math.sin(tiempo * 4) * 0.6;
   }
 }
 
