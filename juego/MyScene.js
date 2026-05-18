@@ -108,12 +108,12 @@ class MyScene extends THREE.Scene {
     this.velocidad = this.guiControls.velocidadJugador;   // metros por segundo
 
     //Raycaster para picking
-    this.raycaster     = new THREE.Raycaster();
+    this.raycaster = new THREE.Raycaster();
     this.raycaster.far = 2.5;   // distancia máxima de interacción (metros)
-    this.vecMouse      = new THREE.Vector2();
-    
+    this.vecMouse = new THREE.Vector2();
+
     //Vectores reutilizables para colisiones
-    this.dirMirada   = new THREE.Vector3();
+    this.dirMirada = new THREE.Vector3();
 
     //Eventos
     this.registrarEventos();
@@ -127,7 +127,7 @@ class MyScene extends THREE.Scene {
     renderer.setClearColor(new THREE.Color(0x111111), 1.0);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     $(myCanvas).append(renderer.domElement);
     return renderer;
   }
@@ -172,11 +172,11 @@ class MyScene extends THREE.Scene {
     if (!this.laberinto || !this.camaraTop) return;
   
     const filas = this.laberinto.mapa.length;
-    const cols  = this.laberinto.mapa[0].length;
-    const t     = this.laberinto.tamCelda;
-  
-    const semiAncho = (cols  * t) / 2;
-    const semiAlto  = (filas * t) / 2;
+    const cols = this.laberinto.mapa[0].length;
+    const t = this.laberinto.tamCelda;
+
+    const semiAncho = (cols * t) / 2;
+    const semiAlto = (filas * t) / 2;
   
     // Margen pequeño para que no se corte el borde exterior del laberinto.
     const margen = t * 0.35;
@@ -184,12 +184,12 @@ class MyScene extends THREE.Scene {
     // Como el viewport del minimapa es cuadrado, usamos el eje mayor.
     const semi = Math.max(semiAncho, semiAlto) + margen;
   
-    this.camaraTop.left   = -semi;
-    this.camaraTop.right  =  semi;
-    this.camaraTop.top    =  semi;
+    this.camaraTop.left = -semi;
+    this.camaraTop.right = semi;
+    this.camaraTop.top = semi;
     this.camaraTop.bottom = -semi;
-    this.camaraTop.near   = 0.1;
-    this.camaraTop.far    = 200;
+    this.camaraTop.near = 0.1;
+    this.camaraTop.far = 200;
   
     this.camaraTop.position.set(0, 50, 0);
     this.camaraTop.lookAt(0, 0, 0);
@@ -200,8 +200,8 @@ class MyScene extends THREE.Scene {
     var gui = new GUI();
   
     this.guiControls = {
-      luzAmbiente : 1.5,
-      luzFocal    : 70,
+      luzAmbiente: 1.5,
+      luzFocal: 70,
       velocidadJugador: 5.0,
     };
   
@@ -473,7 +473,7 @@ class MyScene extends THREE.Scene {
   registrarEventos() {
     // Teclado
     window.addEventListener('keydown', (e) => this.onKeyDown(e));
-    window.addEventListener('keyup',   (e) => this.onKeyUp(e));
+    window.addEventListener('keyup', (e) => this.onKeyUp(e));
  
     // Ratón
     document.addEventListener('mousedown', (e) => this.onMouseDown(e));
@@ -487,8 +487,8 @@ class MyScene extends THREE.Scene {
   // Usamos event.which || event.key para compatibilidad 
   onKeyDown(event) {
     var codigo = event.which || event.keyCode;
-    var tecla  = String.fromCharCode(codigo).toLowerCase();
- 
+    var tecla = String.fromCharCode(codigo).toLowerCase();
+
     // Variables booleanas por tecla
     switch (tecla) {
       case 'w': this.teclas.w = true; break;
@@ -496,26 +496,26 @@ class MyScene extends THREE.Scene {
       case 'a': this.teclas.a = true; break;
       case 'd': this.teclas.d = true; break;
     }
-    if (event.key === 'ArrowUp')    this.teclas.w = true;
-    if (event.key === 'ArrowDown')  this.teclas.s = true;
-    if (event.key === 'ArrowLeft')  this.teclas.a = true;
+    if (event.key === 'ArrowUp') this.teclas.w = true;
+    if (event.key === 'ArrowDown') this.teclas.s = true;
+    if (event.key === 'ArrowLeft') this.teclas.a = true;
     if (event.key === 'ArrowRight') this.teclas.d = true;
   }
  
   // ── TECLADO: keyup ────────────────────────────────────────────────────────────
   onKeyUp(event) {
     var codigo = event.which || event.keyCode;
-    var tecla  = String.fromCharCode(codigo).toLowerCase();
- 
+    var tecla = String.fromCharCode(codigo).toLowerCase();
+
     switch (tecla) {
       case 'w': this.teclas.w = false; break;
       case 's': this.teclas.s = false; break;
       case 'a': this.teclas.a = false; break;
       case 'd': this.teclas.d = false; break;
     }
-    if (event.key === 'ArrowUp')    this.teclas.w = false;
-    if (event.key === 'ArrowDown')  this.teclas.s = false;
-    if (event.key === 'ArrowLeft')  this.teclas.a = false;
+    if (event.key === 'ArrowUp') this.teclas.w = false;
+    if (event.key === 'ArrowDown') this.teclas.s = false;
+    if (event.key === 'ArrowLeft') this.teclas.a = false;
     if (event.key === 'ArrowRight') this.teclas.d = false;
   }
  
@@ -532,7 +532,7 @@ class MyScene extends THREE.Scene {
     this.raycaster.setFromCamera(this.vecMouse, this.camera);
 
     // ── Comprobar clic en el botón ────────────────────────────────────────
-    var impactosBoton = this.raycaster.intersectObject(this.boton.pivoteCapuchon, true);
+    var impactosBoton = this.raycaster.intersectObject(this.boton.pivotePulsador, true);
 
     if (impactosBoton.length > 0) {
       this.boton.iniciarPulsacion();
@@ -698,10 +698,10 @@ class MyScene extends THREE.Scene {
     // Calculamos intención de movimiento
     let movimiento = new THREE.Vector3(0, 0, 0);
   
-    if (this.teclas.w) movimiento.addScaledVector(dirHorizontal,  this.velocidad * dt);
+    if (this.teclas.w) movimiento.addScaledVector(dirHorizontal, this.velocidad * dt);
     if (this.teclas.s) movimiento.addScaledVector(dirHorizontal, -this.velocidad * dt);
-    if (this.teclas.a) movimiento.addScaledVector(dirLateral,    -this.velocidad * dt);
-    if (this.teclas.d) movimiento.addScaledVector(dirLateral,     this.velocidad * dt);
+    if (this.teclas.a) movimiento.addScaledVector(dirLateral, -this.velocidad * dt);
+    if (this.teclas.d) movimiento.addScaledVector(dirLateral, this.velocidad * dt);
   
     movimiento.y = 0;
   
@@ -748,9 +748,9 @@ class MyScene extends THREE.Scene {
   // Método reutilizable para renderizar una cámara en un viewport concreto.
   // left, top, width, height toman valores entre 0 y 1 (proporciones de pantalla)
   renderViewport(camara, left, top, width, height) {
-    var l = left   * window.innerWidth;
-    var t = top    * window.innerHeight;
-    var w = width  * window.innerWidth;
+    var l = left * window.innerWidth;
+    var t = top * window.innerHeight;
+    var w = width * window.innerWidth;
     var h = height * window.innerHeight;
  
     this.renderer.setViewport(l, t, w, h);

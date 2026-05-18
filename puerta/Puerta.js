@@ -34,7 +34,7 @@ class Puerta extends THREE.Object3D {
 
     // Piedra antigua: gris cálido, rugosa, sin reflejo metálico
     this.matPiedra = new THREE.MeshStandardMaterial({
-      color:     '#7A7060',
+      color: '#7A7060',
       metalness: 0.0,
       roughness: 0.95,
     });
@@ -108,37 +108,37 @@ class Puerta extends THREE.Object3D {
   getDims() {
     return {
       // Hueco de paso
-      huechoAncho : 1.4,    // ancho del hueco (metros)
-      huecoAlto   : 2.8,    // alto del hueco
+      huechoAncho: 1.4,    // ancho del hueco (metros)
+      huecoAlto: 2.8,    // alto del hueco
 
       // Hoja de la puerta
-      hojaAncho   : 1.4,
-      hojaAlto    : 2.8,
-      hojaGrosor  : 0.08,
+      hojaAncho: 1.4,
+      hojaAlto: 2.8,
+      hojaGrosor: 0.08,
       hojaMitadAncho: 0.7,  // hojaAncho / 2 (para el pivote)
 
       // Pilares
-      pilarAncho  : 0.35,
-      pilarAlto   : 3.2,    // más alto que el hueco
-      pilarGrosor : 0.40,
+      pilarAncho: 0.35,
+      pilarAlto: 3.2,    // más alto que el hueco
+      pilarGrosor: 0.40,
 
       // Dintel
-      dintelAncho : 2.1,    // hueco + 2 pilares
-      dintelAlto  : 0.40,
+      dintelAncho: 2.1,    // hueco + 2 pilares
+      dintelAlto: 0.40,
       dintelGrosor: 0.40,
 
       // Tablones de la hoja
-      tablonesNum    : 5,
+      tablonesNum: 5,
       tablonGrosorRel: 0.02,  // relieve del tablón respecto a la hoja
 
       // Refuerzo horizontal (barra de hierro cruzada)
-      refuerzoAlto   : 0.06,
-      refuerzoGrosor : 0.05,
+      refuerzoAlto: 0.06,
+      refuerzoGrosor: 0.05,
 
       // Anilla
-      anillaRadio     : 0.06,
-      anillaTubo      : 0.018,
-      pomoRadio       : 0.045,
+      anillaRadio: 0.06,
+      anillaTubo: 0.018,
+      pomoRadio: 0.045,
     };
   }
 
@@ -201,8 +201,8 @@ class Puerta extends THREE.Object3D {
     var brushHoja = new CSG.Brush(geoBase, this.matMadera);
 
     var anchoRanura = 0.012;
-    var numRanuras  = d.tablonesNum - 1;
-    var espaciado   = d.hojaAncho / d.tablonesNum;
+    var numRanuras = d.tablonesNum - 1;
+    var espaciado = d.hojaAncho / d.tablonesNum;
 
     for (var i = 1; i < d.tablonesNum; i++) {
       var xRanura = -d.hojaAncho / 2 + i * espaciado;

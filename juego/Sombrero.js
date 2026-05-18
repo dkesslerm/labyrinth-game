@@ -43,8 +43,8 @@ class Sombrero extends THREE.Object3D {
   
   createGUI(gui, titleGui) {
     this.guiControls = {
-      hatColor   : '#6A4528',   
-      bandColor  : '#2F1C10',   
+      hatColor: '#6A4528',
+      bandColor: '#2F1C10',
     };
 
     var folder = gui.addFolder(titleGui);

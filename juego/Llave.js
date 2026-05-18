@@ -16,12 +16,12 @@ class Llave extends THREE.Object3D {
     texColor.repeat.set(2, 2);
 
     this.materialLlave = new THREE.MeshStandardMaterial({
-        map:       texColor,              // canal de color
-        color:     this.guiControls.colorLlave,  // tinte dorado multiplicativo
+        map: texColor,              // canal de color
+        color: this.guiControls.colorLlave,  // tinte dorado multiplicativo
         metalness: 0.9,
         roughness: 0.2,
     });
-    this.materialGema  = new THREE.MeshPhysicalMaterial({
+    this.materialGema = new THREE.MeshPhysicalMaterial({
         color: this.guiControls.colorGema,
         roughness: 0.04,
         metalness: 0.0,
@@ -49,8 +49,8 @@ class Llave extends THREE.Object3D {
   // ─────────────────────────────────────────────────────────────────────────
   createGUI(gui, titleGui) {
     this.guiControls = {
-      colorLlave : '#D4A843',   // dorado
-      colorGema  : '#9AD8C1'    // rosa
+      colorLlave: '#D4A843',   // dorado
+      colorGema: '#9AD8C1'    // rosa
     };
 
     var folder = gui.addFolder(titleGui);
@@ -77,10 +77,10 @@ class Llave extends THREE.Object3D {
   // El Shape se define en el plano XY con el centro de la cabeza en (0,0).
   // ─────────────────────────────────────────────────────────────────────────
   createShapeLlave() {
-    var R      = 0.038;   // radio exterior de la cabeza
-    var rHole  = 0.014;   // radio del agujero central
-    var g      = 0.020;   // grosor del mango
-    var largo  = 0.105;   // longitud del mango
+    var R = 0.038;   // radio exterior de la cabeza
+    var rHole = 0.014;   // radio del agujero central
+    var g = 0.020;   // grosor del mango
+    var largo = 0.105;   // longitud del mango
  
     // Punto de tangencia mango-cabeza
     var xT = Math.sqrt(R * R - (g / 2) * (g / 2));
@@ -101,10 +101,10 @@ class Llave extends THREE.Object3D {
     shape.absarc(0, 0, R, aSup, aInf + Math.PI * 2, false);
  
     // Estamos en (xT, -g/2). Dibujamos el mango con 3 dientes hacia abajo.
-    var margenIzq   = largo * 0.5;
+    var margenIzq = largo * 0.5;
     var anchoDiente = largo * 0.10;
-    var separacion  = largo * 0.07;
-    var altoDiente  = g * 0.55;
+    var separacion = largo * 0.07;
+    var altoDiente = g * 0.55;
  
     for (var i = 0; i < 3; i++) {
       var xIniD = xT + margenIzq + i * (anchoDiente + separacion);
@@ -116,9 +116,9 @@ class Llave extends THREE.Object3D {
     }
  
     // Extremo derecho y lado superior
-    shape.lineTo(xDer,  -g / 2);
-    shape.lineTo(xDer,   g / 2);
-    shape.lineTo(xT,     g / 2);
+    shape.lineTo(xDer, -g / 2);
+    shape.lineTo(xDer, g / 2);
+    shape.lineTo(xT, g / 2);
  
     // Agujero central (horario)
     var hole = new THREE.Path();
@@ -137,12 +137,12 @@ class Llave extends THREE.Object3D {
 
     // Opciones de extrusión: sin bisel para que quede limpio
     var options = {
-      depth          : 0.008,   // 8 mm de grosor
-      bevelEnabled   : true,
-      bevelThickness : 0.001,
-      bevelSize      : 0.001,
-      bevelSegments  : 2,
-      curveSegments  : 32       // buena resolución para el círculo
+      depth: 0.008,   // 8 mm de grosor
+      bevelEnabled: true,
+      bevelThickness: 0.001,
+      bevelSize: 0.001,
+      bevelSegments: 2,
+      curveSegments: 32       // buena resolución para el círculo
     };
 
     var geo = new THREE.ExtrudeGeometry(shape, options);
@@ -187,10 +187,10 @@ class Llave extends THREE.Object3D {
 
     // ── Geometrías ────────────────────────────────────────────────────────
     var geoCuerpo = this.createCuerpoLlave();
-    var geoGema   = this.createGema();
+    var geoGema = this.createGema();
 
     // Esfera que servirá de hueco para alojar la gema
-    var rHueco  = 0.013;   // ligeramente mayor que el radio máximo de la gema
+    var rHueco = 0.013;   // ligeramente mayor que el radio máximo de la gema
     var geoHueco = new THREE.SphereGeometry(rHueco, 24, 24);
 
     // ── Posicionado de geometrías (antes de crear los Brush) ──────────────
@@ -203,8 +203,8 @@ class Llave extends THREE.Object3D {
 
     // ── Brushes ───────────────────────────────────────────────────────────
     var brushCuerpo = new CSG.Brush(geoCuerpo, this.materialLlave);
-    var brushHueco  = new CSG.Brush(geoHueco,  this.materialLlave);
-    var brushGema   = new CSG.Brush(geoGema,   this.materialGema);
+    var brushHueco = new CSG.Brush(geoHueco, this.materialLlave);
+    var brushGema = new CSG.Brush(geoGema, this.materialGema);
 
     // ── Operaciones CSG ───────────────────────────────────────────────────
     var evaluador = new CSG.Evaluator();

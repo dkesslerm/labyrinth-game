@@ -30,9 +30,9 @@ class Laberinto extends THREE.Object3D {
       [1, 1, 1, 1, 1, 1, 1, 1, 3, 1],
     ];
 
-    this.tamCelda  = 2.0;
+    this.tamCelda = 2.0;
     this.altoPared = 4.0;
-    this.paredes   = [];
+    this.paredes = [];
 
     // Cargamos texturas y construimos
     this.loader = new THREE.TextureLoader();
@@ -59,42 +59,42 @@ class Laberinto extends THREE.Object3D {
     // ── Pared: piedra rugosa con mapa normal para relieve ─────────────────
     // Las texturas se repiten 2 veces por cara para que el tamaño
     // del bloque de piedra sea creíble (no losas gigantes)
-    var texParedColor  = this.cargarTextura('../imgs/stone_color.jpg',  1, 1);
+    var texParedColor = this.cargarTextura('../imgs/stone_color.jpg', 1, 1);
     var texParedNormal = this.cargarTextura('../imgs/stone_normal.jpg', 1, 1);
 
     this.matPared = new THREE.MeshStandardMaterial({
-      map:          texParedColor,
-      normalMap:    texParedNormal,
-      normalScale:  new THREE.Vector2(1.5, 1.5),  // intensidad del relieve
-      roughness:    0.95,
-      metalness:    0.0,
-      color:        '#D4C4A8'   // tinte cálido sobre la textura
+      map: texParedColor,
+      normalMap: texParedNormal,
+      normalScale: new THREE.Vector2(1.5, 1.5),  // intensidad del relieve
+      roughness: 0.95,
+      metalness: 0.0,
+      color: '#D4C4A8'   // tinte cálido sobre la textura
     });
 
     // Variante más oscura para alternar bloques
-    var texParedOscuraColor  = this.cargarTextura('../imgs/stone_color.jpg',  1, 1);
+    var texParedOscuraColor = this.cargarTextura('../imgs/stone_color.jpg', 1, 1);
     var texParedOscuraNormal = this.cargarTextura('../imgs/stone_normal.jpg', 1, 1);
 
     this.matParedOscura = new THREE.MeshStandardMaterial({
-      map:         texParedOscuraColor,
-      normalMap:   texParedOscuraNormal,
+      map: texParedOscuraColor,
+      normalMap: texParedOscuraNormal,
       normalScale: new THREE.Vector2(1.5, 1.5),
-      roughness:   1.0,
-      metalness:   0.0,
-      color:       '#B8A888'   // tinte más oscuro
+      roughness: 1.0,
+      metalness: 0.0,
+      color: '#B8A888'   // tinte más oscuro
     });
 
     // ── Suelo: losas con repetición más grande (losas más grandes) ────────
-    var texSueloColor  = this.cargarTextura('../imgs/floor_color.jpg',  1, 1);
+    var texSueloColor = this.cargarTextura('../imgs/floor_color.jpg', 1, 1);
     var texSueloNormal = this.cargarTextura('../imgs/floor_normal.jpg', 1, 1);
 
     this.matSuelo = new THREE.MeshStandardMaterial({
-      map:         texSueloColor,
-      normalMap:   texSueloNormal,
+      map: texSueloColor,
+      normalMap: texSueloNormal,
       normalScale: new THREE.Vector2(1.0, 1.0),
-      roughness:   0.9,
-      metalness:   0.0,
-      color:       '#E8E0D0'
+      roughness: 0.9,
+      metalness: 0.0,
+      color: '#E8E0D0'
     });
   }
 
@@ -114,15 +114,15 @@ class Laberinto extends THREE.Object3D {
     var h = this.altoPared;
 
     // Variación determinista de altura
-    var variacion  = ((fila * 7 + col * 13) % 5) * 0.04;
+    var variacion = ((fila * 7 + col * 13) % 5) * 0.04;
     var altoBloque = h + variacion;
 
     var geo = new THREE.BoxGeometry(t, altoBloque, t);
     var mat = ((fila + col) % 3 === 0) ? this.matParedOscura : this.matPared;
     var mesh = new THREE.Mesh(geo, mat);
 
-    var x = (col  - this.mapa[0].length / 2 + 0.5) * t;
-    var z = (fila - this.mapa.length    / 2 + 0.5) * t;
+    var x = (col - this.mapa[0].length / 2 + 0.5) * t;
+    var z = (fila - this.mapa.length / 2 + 0.5) * t;
     mesh.position.set(x, altoBloque / 2, z);
 
     var bbox = new THREE.Box3().setFromObject(mesh);
@@ -133,8 +133,8 @@ class Laberinto extends THREE.Object3D {
   // ── SUELO ──────────────────────────────────────────────────────────────────
   crearSuelo() {
     var filas = this.mapa.length;
-    var cols  = this.mapa[0].length;
-    var t     = this.tamCelda;
+    var cols = this.mapa[0].length;
+    var t = this.tamCelda;
 
     for (var fila = 0; fila < filas; fila++) {
       for (var col = 0; col < cols; col++) {
@@ -142,7 +142,7 @@ class Laberinto extends THREE.Object3D {
         var mat = this.matSuelo;
         var mesh = new THREE.Mesh(geo, mat);
 
-        var x = (col  - cols  / 2 + 0.5) * t;
+        var x = (col - cols / 2 + 0.5) * t;
         var z = (fila - filas / 2 + 0.5) * t;
         mesh.position.set(x, -0.075, z);
 
@@ -158,8 +158,8 @@ class Laberinto extends THREE.Object3D {
   celdaAMundo(fila, col) {
     var t = this.tamCelda;
     return {
-      x: (col  - this.mapa[0].length / 2 + 0.5) * t,
-      z: (fila - this.mapa.length    / 2 + 0.5) * t
+      x: (col - this.mapa[0].length / 2 + 0.5) * t,
+      z: (fila - this.mapa.length / 2 + 0.5) * t
     };
   }
 

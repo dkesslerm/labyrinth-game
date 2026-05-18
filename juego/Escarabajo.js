@@ -11,13 +11,13 @@ class Escarabajo extends THREE.Object3D {
     });
 
     this.matLapis = new THREE.MeshStandardMaterial({
-      color:              0x1A7A40,   // verde escarabajo oscuro
-      metalness:          0.85,       // muy metálico → reflejo iridiscente
-      roughness:          0.15,       // muy pulido → brillo intenso
-      clearcoat:          1.0,        // capa de barniz encima → efecto quitina
+      color: 0x1A7A40,   // verde escarabajo oscuro
+      metalness: 0.85,       // muy metálico → reflejo iridiscente
+      roughness: 0.15,       // muy pulido → brillo intenso
+      clearcoat: 1.0,        // capa de barniz encima → efecto quitina
       clearcoatRoughness: 0.05,       // barniz casi espejo
-      reflectivity:       1.0,
-      side:               THREE.DoubleSide,
+      reflectivity: 1.0,
+      side: THREE.DoubleSide,
     });
 
     this.matPata = new THREE.MeshStandardMaterial({
@@ -361,8 +361,8 @@ class Escarabajo extends THREE.Object3D {
 
     const patasConfig = [
       { tipo: 'delantera', z: d.cuerpoRZ * 0.46, yaw: 0.42 },
-      { tipo: 'central',   z: 0.0,                yaw: 0.00 },
-      { tipo: 'trasera',   z: -d.cuerpoRZ * 0.44, yaw: -0.42 },
+      { tipo: 'central', z: 0.0, yaw: 0.00 },
+      { tipo: 'trasera', z: -d.cuerpoRZ * 0.44, yaw: -0.42 },
     ];
 
     patasConfig.forEach((cfg) => {
