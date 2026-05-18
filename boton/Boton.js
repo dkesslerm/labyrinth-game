@@ -35,14 +35,12 @@ class Boton extends THREE.Object3D {
     this.add(this.pivoteCapuchon);
 
     // ── Estado de animación ─────────────────────────────────────────────────
-    //   'reposo'   → capuchón arriba
-    //   'pulsando' → hundimiento rápido
-    //   'soltando' → retorno suave
+    //   'reposo', 'pulsando' 'soltando'
     this.estado = 'reposo';
-    this.desplazamientoActual = 0;           // Y actual del pivote
+    this.desplazamientoActual = 0;
     this.desplazamientoMaximo = this.dims.hundimiento;
-    this.velocidadBajada = 0.5;             // unidades/s
-    this.velocidadSubida = 0.2;             // unidades/s (más lento al soltar)
+    this.velocidadBajada = 0.5;
+    this.velocidadSubida = 0.2;             // más lento al soltar
 
     this.reloj = new THREE.Clock();
   }
@@ -50,7 +48,7 @@ class Boton extends THREE.Object3D {
   // ── GUI ────────────────────────────────────────────────────────────────────
   createGUI(gui, titleGui) {
     this.guiControls = {
-      colorBoton  : '#CC2222',   // rojo intenso
+      colorBoton  : '#CC2222',
       pulsar: () => this.iniciarPulsacion(),
     };
 
@@ -71,10 +69,10 @@ class Boton extends THREE.Object3D {
       baseAlto   : 0.06,
       baseGrosor: 0.18,
       
-      // Capuchón
-      capuchonRadio   : 0.065,  // radio del cilindro
-      capuchonAlto    : 0.020,  // altura del cilindro
-      domoRadio       : 0.065,  // radio de la esfera que redondea la cima
+      // Cilindro
+      capuchonRadio : 0.065,
+      capuchonAlto : 0.020,
+      domoRadio : 0.065,
 
       // Hundimiento máximo al pulsar
       hundimiento : 0.025,
@@ -92,8 +90,7 @@ class Boton extends THREE.Object3D {
   }
 
   // ── CAPUCHÓN (tecla) ───────────────────────────────────────────────────────
-  // Cilindro con la cima abovedada: se hace con CSG (cilindro INTERSECT esfera)
-  // para obtener el perfil redondeado típico de un pulsador industrial.
+  // Cilindro con la cima abovedada
   createCapuchon() {
     var d = this.dims;
 
@@ -110,14 +107,13 @@ class Boton extends THREE.Object3D {
     // La esfera se sube para que solo intersecte la mitad superior del cilindro
     geoEsfera.translate(0, d.capuchonAlto * 0.38, 0);
 
-    // CSG: cilindro UNION esfera → capuchón con domo
+    // CSG:
     var evaluador = new CSG.Evaluator();
     var brushCil    = new CSG.Brush(geoCil,    this.matCapuchon);
-    var brushEsfera = new CSG.Brush(geoEsfera, this.matCapuchon);
+    var brushEsf // (su centro geométrico queda a capuchonAlto/2 sobre la cara superior de la base)era = new CSG.Brush(geoEsfera, this.matCapuchon);
     var capuchon = evaluador.evaluate(brushCil, brushEsfera, CSG.ADDITION);
 
     // Posicionamos el capuchón encima de la base
-    // (su centro geométrico queda a capuchonAlto/2 sobre la cara superior de la base)
     capuchon.position.set(0, d.baseAlto + d.capuchonAlto / 2, 0);
 
     return capuchon;

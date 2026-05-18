@@ -5,33 +5,32 @@ class Daga extends THREE.Object3D {
   constructor(gui, titleGui) {
     super();
 
-    // La GUI se crea primero porque otros métodos usan this.guiControls
+    // GUI
     this.createGUI(gui, titleGui);
 
-    // Materiales compartidos entre métodos
-    // HOJA: acero pulido. Alta metalicidad, muy baja rugosidad para
-    // que refleje la luz y parezca afilada.
+    // Materiales
+
+    //HOJA
     this.materialHoja = new THREE.MeshPhysicalMaterial({
       color: '#D8E0E8',
       metalness: 0.6,
       roughness: 0.08,
-      clearcoat: 1.0,   // capa de barniz encima (como acero lacado)
+      clearcoat: 1.0,
       clearcoatRoughness: 0.1,
       reflectivity: 1.0,
       side: THREE.DoubleSide,
-      ior: 2.5   // índice de refracción (vidrio = 1.5, diamante = 2.4)
+      ior: 2.5
     });
  
-    // GUARDA: bronce/hierro. Metal pero más mate y oscuro que la hoja.
+    // GUARDA:
     this.materialGuarda = new THREE.MeshStandardMaterial({
       color:            '#8A7A50',
       metalness:        0.80,
-      roughness:        0.40,   // más rugoso → aspecto de metal forjado
+      roughness:        0.40,
       envMapIntensity:  0.8
     });
  
-    // MANGO: madera oscura tallada. Dieléctrico, sin reflejo metálico,
-    // rugosidad alta para simular la textura de la madera.
+    // MANGO:
     this.materialMango = new THREE.MeshStandardMaterial({
       color:            '#3A2A1A',
       metalness:        0.0,    // la madera no es metal
@@ -39,8 +38,7 @@ class Daga extends THREE.Object3D {
       envMapIntensity:  0.3
     });
  
-    // CUERDA: hilo trenzado dorado. Dieléctrico con algo de brillo
-    // para simular el aspecto satinado de un hilo de seda o cuero.
+    // CUERDA:
     this.materialCuerda = new THREE.MeshPhysicalMaterial({
       color:     '#B89040',
       sheen:     1.0,          // brillo de tela/hilo
@@ -49,11 +47,7 @@ class Daga extends THREE.Object3D {
       metalness:  0.0,
     });
 
-    // La hoja se crea y añade por separado porque su BufferGeometry
-    // no es compatible con CSG. El resto de piezas se ensamblan con
-    // CSG en createDaga y se añaden también desde aquí.
-    // Es el mismo patrón que usa la Grapadora: el constructor crea
-    // cada pieza y la añade a this individualmente.
+    // La hoja se hace por separado (BufferGeometry no es compatible con CSG)
     var dims = this.getDims();
     
     this.add( this.createGeoHoja(dims) );
@@ -69,10 +63,10 @@ class Daga extends THREE.Object3D {
   // ── GUI ──────────────────────────────────────────────────────────────────
   createGUI(gui, titleGui) {
     this.guiControls = {
-      colorHoja   : '#C0C8D0',   // plateado metálico
-      colorMango  : '#3A2A1A',   // madera oscura
-      colorCuerda : '#C8A830',   // cuerda dorada
-      colorGuarda : '#8A7A50'    // bronce
+      colorHoja   : '#C0C8D0',
+      colorMango  : '#3A2A1A',
+      colorCuerda : '#C8A830',
+      colorGuarda : '#8A7A50'
     };
 
     var folder = gui.addFolder(titleGui);
@@ -91,18 +85,16 @@ class Daga extends THREE.Object3D {
   }
 
   // ── DIMENSIONES COMPARTIDAS ──────────────────────────────────────────────
-  // Se definen aquí para que todas las piezas estén proporcionadas entre sí
-  // y sean fáciles de ajustar.
   getDims() {
     return {
       // Hoja
-      hojaAlto  : 0.15,    // altura total de la hoja
-      hojaAncho : 0.035,   // anchura en la base de la hoja
-      hojaGrosor: 0.010,   // grosor máximo en el lomo
+      hojaAlto  : 0.15,
+      hojaAncho : 0.035,
+      hojaGrosor: 0.010,
 
       // Guarda
       guardaAlto  : 0.012,
-      guardaAncho : 0.045,  // más ancha que la hoja para sobresalir
+      guardaAncho : 0.045,
       guardaGrosor: 0.018,
 
       // Mango
@@ -114,13 +106,12 @@ class Daga extends THREE.Object3D {
       pomoRadio : 0.016,
 
       // Cuerda
-      cuerdaRadio  : 0.002,   // grosor de la sección de la cuerda
-      cuerdaVueltas: 20,        // número de vueltas alrededor del mango
+      cuerdaRadio  : 0.002,
+      cuerdaVueltas: 20,
     };
   }
 
   // ── HOJA (geometría manual con BufferGeometry) ───────────────────────────
-  //
   // La hoja se construye como una pirámide de BASE HEXAGONAL.
   // El hexágono no es regular
   // ──────────────────────────────────────────────────────────────────────────
