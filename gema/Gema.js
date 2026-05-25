@@ -183,14 +183,6 @@ class Gema extends THREE.Object3D {
     return grupo;
   }
 
-  createBase() {
-    const grupo = new THREE.Object3D();
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.5), this.matPiedra);
-    mesh.position.set(0, -0.2, 0);
-    grupo.add(mesh);
-    return grupo;
-  }
-
   update() {
       const tiempo = this.reloj.getElapsedTime();
       
