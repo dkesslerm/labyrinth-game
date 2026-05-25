@@ -3,13 +3,10 @@ import * as CSG from '../libs/three-bvh-csg.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Puerta del laberinto
-
 // Piezas: Marco, hoja, anilla/pomo
-//
 // Animación:
-//   · Temblor previo a la apertura (oscilación en Z)
-//   · Apertura: rotación en Y alrededor del pilar izquierdo (bisagra)
-//
+//   · Temblor previo a la apertura
+//   · Apertura: rotación en Y alrededor del pilar izquierdo
 // ─────────────────────────────────────────────────────────────────────────────
 
 class Puerta extends THREE.Object3D {
@@ -32,14 +29,14 @@ class Puerta extends THREE.Object3D {
     
     // ── Materiales ──────────────────────────────────────────────────────────
 
-    // Piedra antigua: gris cálido, rugosa, sin reflejo metálico
+    // Piedra antigua:
     this.matPiedra = new THREE.MeshStandardMaterial({
       color: '#7A7060',
       metalness: 0.0,
       roughness: 0.95,
     });
 
-    // Madera oscura: caoba envejecida
+    // Madera oscura:
     this.matMadera = new THREE.MeshStandardMaterial({
       map: texColor,
       normalMap: texNormal,
@@ -48,14 +45,14 @@ class Puerta extends THREE.Object3D {
       roughness: 0.85,
     });
 
-    // Metal envejecido: hierro oxidado para los herrajes
+    // Metal envejecido:
     this.matMetal = new THREE.MeshStandardMaterial({
       color: '#4A3828',
       metalness: 0.7,
       roughness: 0.6,
     });
 
-    // Metal dorado: para la anilla/pomo
+    // Metal dorado:
     this.matOro = new THREE.MeshStandardMaterial({
       color: '#B8860B',
       metalness: 0.9,
@@ -66,11 +63,9 @@ class Puerta extends THREE.Object3D {
     this.dims = this.getDims();
 
     // ── Construcción ────────────────────────────────────────────────────────
-    // El marco (pilares + dintel) 
     this.add(this.createMarco());
 
     // La hoja cuelga de un nodo pivote que está en el borde izquierdo
-    // (donde estaría la bisagra). Al rotar el pivote en Y se abre la puerta.
     this.pivote = new THREE.Object3D();
     var dims = this.dims;
     // El pivote se sitúa en el borde izquierdo de la hoja
@@ -108,14 +103,14 @@ class Puerta extends THREE.Object3D {
   getDims() {
     return {
       // Hueco de paso
-      huechoAncho: 1.4,    // ancho del hueco (metros)
-      huecoAlto: 2.8,    // alto del hueco
+      huechoAncho: 1.4,
+      huecoAlto: 2.8,
 
       // Hoja de la puerta
       hojaAncho: 1.4,
       hojaAlto: 2.8,
       hojaGrosor: 0.08,
-      hojaMitadAncho: 0.7,  // hojaAncho / 2 (para el pivote)
+      hojaMitadAncho: 0.7,
 
       // Pilares
       pilarAncho: 0.35,
@@ -123,15 +118,15 @@ class Puerta extends THREE.Object3D {
       pilarGrosor: 0.40,
 
       // Dintel
-      dintelAncho: 2.1,    // hueco + 2 pilares
+      dintelAncho: 2.1,
       dintelAlto: 0.40,
       dintelGrosor: 0.40,
 
       // Tablones de la hoja
       tablonesNum: 5,
-      tablonGrosorRel: 0.02,  // relieve del tablón respecto a la hoja
+      tablonGrosorRel: 0.02,
 
-      // Refuerzo horizontal (barra de hierro cruzada)
+      // Refuerzo horizontal
       refuerzoAlto: 0.06,
       refuerzoGrosor: 0.05,
 
@@ -159,9 +154,9 @@ class Puerta extends THREE.Object3D {
     var d = this.dims;
     var geo = new THREE.CylinderGeometry(
       d.pilarAncho / 2,       // radio superior
-      d.pilarAncho / 2 * 1.1, // radio inferior ligeramente más ancho → aspecto de columna
+      d.pilarAncho / 2 * 1.1, // radio inferior
       d.pilarAlto,
-      12                      // 12 segmentos → columna con facetas de piedra tallada
+      12                      // 12 segmentos 
     );
     // CylinderGeometry se crea centrado en y=0, lo subimos para que
     // arranque desde el suelo
@@ -179,16 +174,6 @@ class Puerta extends THREE.Object3D {
   }
 
   // ── HOJA DE LA PUERTA ──────────────────────────────────────────────────────
-  //
-  // La hoja se construye con CSG:
-  //   1. Tablón base (caja)
-  //   2. Se restan ranuras verticales para simular tablones separados
-  //   3. Se añaden refuerzos horizontales de hierro (cajas más estrechas)
-  //   4. Se añaden clavos en las esquinas (esferas pequeñas)
-  //
-  // La hoja se crea con su centro en (0,0,0). El pivote (bisagra) la
-  // desplazará para que gire alrededor del borde izquierdo.
-  //
   createHoja() {
     var d = this.dims;
     var contenedor = new THREE.Object3D();
@@ -216,9 +201,9 @@ class Puerta extends THREE.Object3D {
 
     // Refuerzos horizontales de hierro (3 barras: arriba, centro, abajo)
     var yRefuerzos = [
-      d.hojaAlto * 0.38,    // barra superior
-      0,                     // barra central
-      -d.hojaAlto * 0.38    // barra inferior
+      d.hojaAlto * 0.38,
+      0,
+      -d.hojaAlto * 0.38
     ];
 
     yRefuerzos.forEach((y) => {
@@ -240,7 +225,6 @@ class Puerta extends THREE.Object3D {
     });
 
     // La hoja se posiciona para que su borde izquierdo esté en x = 0
-    // (el pivote está en el borde izquierdo)
     contenedor.position.set(d.hojaMitadAncho, d.hojaAlto / 2, 0);
 
     return contenedor;
@@ -248,7 +232,7 @@ class Puerta extends THREE.Object3D {
 
   // ── ANILLA / POMO ──────────────────────────────────────────────────────────
   //
-  // Un toro (la anilla que se agarra) + una esfera de base (el enganche).
+  // Un toro + una esfera de base.
   // Se sitúa en el lado derecho de la hoja, a la altura del pecho.
   //
   createAnilla() {
@@ -274,12 +258,11 @@ class Puerta extends THREE.Object3D {
     contenedor.add(meshPomo);
     contenedor.add(meshAnilla);
 
-    // Posición: lado derecho de la hoja, altura del pecho 
-    // Como la hoja está en el pivote, las coordenadas son relativas a él
+    // Posición: lado derecho de la hoja, altura del pecho
     contenedor.position.set(
-      d.hojaMitadAncho * 1.6,   // lado derecho de la hoja
-      d.hojaAlto * 0.65,        // altura del pecho
-      d.hojaGrosor / 2 + d.pomoRadio * 0.5  // cara frontal de la hoja
+      d.hojaMitadAncho * 1.6,
+      d.hojaAlto * 0.65,
+      d.hojaGrosor / 2 + d.pomoRadio * 0.5
     );
 
     // Guardamos referencia al pomo para la detección de clic
@@ -289,11 +272,9 @@ class Puerta extends THREE.Object3D {
   }
 
   // ── APERTURA ───────────────────────────────────────────────────────────────
-  //
   // La apertura tiene dos fases:
-  //   1. Temblor: la puerta vibra ligeramente (efecto de mecanismo antiguo)
+  //   1. Temblor: la puerta vibra ligeramente
   //   2. Apertura: rotación suave del pivote en Y hasta 90°
-  //
   iniciarApertura() {
     if (this.estado === 'cerrada') {
       this.estado = 'temblando';

@@ -1,13 +1,7 @@
 import * as THREE from 'three'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Laberinto de templo estilo Indiana Jones / Temple Run
-//
-// Texturas necesarias en la carpeta imgs/:
-//   · stone_color.jpg    → color de la piedra de las paredes
-//   · stone_normal.jpg   → mapa normal de la piedra (relieve)
-//   · floor_color.jpg    → color de las losas del suelo
-//   · floor_normal.jpg   → mapa normal del suelo
+// Laberinto de templo
 // ─────────────────────────────────────────────────────────────────────────────
 
 class Laberinto extends THREE.Object3D {
@@ -42,9 +36,6 @@ class Laberinto extends THREE.Object3D {
   }
 
   // ── HELPER: cargar textura con fallback de color ──────────────────────────
-  // Si la textura no existe, Three.js mostrará un color magenta de error.
-  // Con este helper se puede poner un color de fallback mientras no
-  // se tengan las texturas descargadas.
   cargarTextura(ruta, repeticionX, repeticionY) {
     var tex = this.loader.load(ruta);
     tex.wrapS = THREE.RepeatWrapping;
@@ -57,8 +48,6 @@ class Laberinto extends THREE.Object3D {
   crearMateriales() {
 
     // ── Pared: piedra rugosa con mapa normal para relieve ─────────────────
-    // Las texturas se repiten 2 veces por cara para que el tamaño
-    // del bloque de piedra sea creíble (no losas gigantes)
     var texParedColor = this.cargarTextura('../imgs/stone_color.jpg', 1, 1);
     var texParedNormal = this.cargarTextura('../imgs/stone_normal.jpg', 1, 1);
 
@@ -81,10 +70,10 @@ class Laberinto extends THREE.Object3D {
       normalScale: new THREE.Vector2(1.5, 1.5),
       roughness: 1.0,
       metalness: 0.0,
-      color: '#B8A888'   // tinte más oscuro
+      color: '#B8A888'
     });
 
-    // ── Suelo: losas con repetición más grande (losas más grandes) ────────
+    // ── Suelo: losas con repetición más grande
     var texSueloColor = this.cargarTextura('../imgs/floor_color.jpg', 1, 1);
     var texSueloNormal = this.cargarTextura('../imgs/floor_normal.jpg', 1, 1);
 

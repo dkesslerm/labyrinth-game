@@ -247,53 +247,54 @@ class Escarabajo extends THREE.Object3D {
     return grupo;
   }
 
+  createColmillo(d, lado) {
+    const zBase = d.cabezaRZ * 0.72;
+    const yBase = -d.cabezaRY * 0.18;
+    const xSep = d.cabezaRX * 0.26;
+
+    const pivote = new THREE.Object3D();
+    pivote.position.set(lado * xSep, yBase, zBase);
+
+    const L = d.colmilloLargo;
+    const p0 = new THREE.Vector3(0, 0, 0);
+    const p1 = new THREE.Vector3(lado * L * 0.18, -L * 0.12, L * 0.42);
+    const p2 = new THREE.Vector3(lado * L * 0.06, -L * 0.58, L * 0.72);
+    const curva = new THREE.QuadraticBezierCurve3(p0, p1, p2);
+
+    const geoTubo = new THREE.TubeGeometry(curva, 128, d.colmilloRadio, 128, false);
+    pivote.add(new THREE.Mesh(geoTubo, this.matColmillo));
+
+    const tangente = curva.getTangent(1).normalize();
+    const altoPunta = L * 0.22;
+
+    const geoCono = new THREE.ConeGeometry(d.colmilloRadio, altoPunta, 128);
+    const cono = new THREE.Mesh(geoCono, this.matColmillo);
+
+    cono.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangente);
+    cono.position.copy(p2).addScaledVector(tangente, altoPunta * 0.5);
+
+    pivote.add(cono);
+
+    return pivote;
+  }
+
   createCabeza(d) {
     const grupo = new THREE.Object3D();
-  
+
     const cabeza = new THREE.Mesh(
       this.createScaledSphere(d.cabezaRX, d.cabezaRY, d.cabezaRZ, 28, 20),
       this.matOro
     );
     grupo.add(cabeza);
-  
-    // Ojos nuevos
+
     grupo.add(this.createOjo(d, -1));
     grupo.add(this.createOjo(d, 1));
-  
-    // Colmillos
-    const zBase = d.cabezaRZ * 0.72;
-    const yBase = -d.cabezaRY * 0.18;
-    const xSep = d.cabezaRX * 0.26;
-  
-    [-1, 1].forEach((lado) => {
-      const pivote = new THREE.Object3D();
-      pivote.position.set(lado * xSep, yBase, zBase);
-  
-      const L = d.colmilloLargo;
-      const p0 = new THREE.Vector3(0, 0, 0);
-      const p1 = new THREE.Vector3(lado * L * 0.18, -L * 0.12, L * 0.42);
-      const p2 = new THREE.Vector3(lado * L * 0.06, -L * 0.58, L * 0.72);
-      const curva = new THREE.QuadraticBezierCurve3(p0, p1, p2);
-  
-      const geoTubo = new THREE.TubeGeometry(curva, 128, d.colmilloRadio, 128, false);
-      pivote.add(new THREE.Mesh(geoTubo, this.matColmillo));
-  
-      const tangente = curva.getTangent(1).normalize();
-      const altoPunta = L * 0.22;
-  
-      const geoCono = new THREE.ConeGeometry(d.colmilloRadio, altoPunta, 128);
-      const cono = new THREE.Mesh(geoCono, this.matColmillo);
-  
-      cono.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangente);
-      cono.position.copy(p2).addScaledVector(tangente, altoPunta * 0.5);
-  
-      pivote.add(cono);
-      grupo.add(pivote);
-  
-      if (lado === -1) this.pivoteColmilloIzq = pivote;
-      else this.pivoteColmilloDer = pivote;
-    });
-  
+
+    this.pivoteColmilloIzq = this.createColmillo(d, -1);
+    this.pivoteColmilloDer = this.createColmillo(d, 1);
+    grupo.add(this.pivoteColmilloIzq);
+    grupo.add(this.pivoteColmilloDer);
+
     return grupo;
   }
 

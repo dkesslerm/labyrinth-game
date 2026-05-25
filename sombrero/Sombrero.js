@@ -80,17 +80,6 @@ class Sombrero extends THREE.Object3D {
       new THREE.Vector2(0.072, 0.242),
       new THREE.Vector2(0.042, 0.25),
       new THREE.Vector2(0.0, 0.25),
-
-      // grosor (rama interior, de arriba a abajo)
-      // new THREE.Vector2(0.0,     0.24),
-      // new THREE.Vector2(0.037,   0.24),
-      // new THREE.Vector2(0.067,   0.232),
-      // new THREE.Vector2(0.100,   0.22),
-      // new THREE.Vector2(0.130,   0.19),
-      // new THREE.Vector2(0.151,   0.14),
-      // new THREE.Vector2(0.160,   0.073),
-      // new THREE.Vector2(0.163,   0.01),
-      // new THREE.Vector2(0.168,   0.0),
     ];
   
     const geoCopa = new THREE.LatheGeometry(contornoCopa, 96);

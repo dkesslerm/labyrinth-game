@@ -8,7 +8,7 @@ class Llave extends THREE.Object3D {
     // La GUI se crea primero porque otros métodos usan this.guiControls
     this.createGUI(gui, titleGui);
 
-    // Materiales: uno para el cuerpo de la llave y otro para la gema
+    // Materiales:
     var loader = new THREE.TextureLoader();
     var texColor = loader.load('../imgs/llave_color.jpg');
     texColor.wrapS = THREE.RepeatWrapping;
@@ -16,8 +16,8 @@ class Llave extends THREE.Object3D {
     texColor.repeat.set(2, 2);
 
     this.materialLlave = new THREE.MeshStandardMaterial({
-        map: texColor,              // canal de color
-        color: this.guiControls.colorLlave,  // tinte dorado multiplicativo
+        map: texColor,
+        color: this.guiControls.colorLlave,
         metalness: 0.9,
         roughness: 0.2,
     });
@@ -49,8 +49,8 @@ class Llave extends THREE.Object3D {
   // ─────────────────────────────────────────────────────────────────────────
   createGUI(gui, titleGui) {
     this.guiControls = {
-      colorLlave: '#D4A843',   // dorado
-      colorGema: '#9AD8C1'    // rosa
+      colorLlave: '#D4A843',
+      colorGema: '#9AD8C1'
     };
 
     var folder = gui.addFolder(titleGui);
@@ -66,21 +66,12 @@ class Llave extends THREE.Object3D {
 
   // ─────────────────────────────────────────────────────────────────────────
   // SHAPE DE LA LLAVE  (plano XY, se extruirá en Z)
-  //
-  // Descripción del contorno:
-  //
-  //   · Cabeza circular: círculo de radio R centrado en el origen
-  //   · Agujero central de la cabeza: círculo interior (hole)
-  //   · Mango: rectángulo que sale a la derecha de la cabeza
-  //   · Dientes: tres muescas recortadas en el mango (holes rectangulares)
-  //
-  // El Shape se define en el plano XY con el centro de la cabeza en (0,0).
   // ─────────────────────────────────────────────────────────────────────────
   createShapeLlave() {
-    var R = 0.038;   // radio exterior de la cabeza
-    var rHole = 0.014;   // radio del agujero central
-    var g = 0.020;   // grosor del mango
-    var largo = 0.105;   // longitud del mango
+    var R = 0.038;
+    var rHole = 0.014;
+    var g = 0.020;
+    var largo = 0.105;
  
     // Punto de tangencia mango-cabeza
     var xT = Math.sqrt(R * R - (g / 2) * (g / 2));
@@ -142,7 +133,7 @@ class Llave extends THREE.Object3D {
       bevelThickness: 0.001,
       bevelSize: 0.001,
       bevelSegments: 2,
-      curveSegments: 32       // buena resolución para el círculo
+      curveSegments: 32
     };
 
     var geo = new THREE.ExtrudeGeometry(shape, options);
@@ -154,18 +145,13 @@ class Llave extends THREE.Object3D {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // GEMA  por revolución (LatheGeometry)
-  //
-  // Perfil: una piedra facetada vista de lado.
-  // Los puntos se definen de ABAJO HACIA ARRIBA
-  // y en el lado positivo del eje X (distancia al eje de revolución = Y).
-  //
+  // GEMA  por revolución
   // ─────────────────────────────────────────────────────────────────────────
   createGema() {
-    var rGema = 0.013;   // radio máximo de la gema
-    var semialtura = 0.008;   // la gema es más alta que ancha
+    var rGema = 0.013;
+    var semialtura = 0.008;
 
-    // Perfil de abajo hacia arriba (Vector2: x = distancia al eje, y = altura)
+    // Perfil de abajo hacia arriba
     var puntos = [
       new THREE.Vector2(0,          -semialtura*2),   // punta inferior
       new THREE.Vector2(rGema, -semialtura/2),  // faceta inferior
@@ -174,7 +160,6 @@ class Llave extends THREE.Object3D {
       new THREE.Vector2(0,            semialtura*2 )    // punta superior
     ];
 
-    // LatheGeometry: perfil, segmentos de revolución, ángulo inicio, ángulo total
     var geoGema = new THREE.LatheGeometry(puntos, 128, 0, Math.PI * 2);
 
     return geoGema;
@@ -190,16 +175,11 @@ class Llave extends THREE.Object3D {
     var geoGema = this.createGema();
 
     // Esfera que servirá de hueco para alojar la gema
-    var rHueco = 0.013;   // ligeramente mayor que el radio máximo de la gema
+    var rHueco = 0.013;
     var geoHueco = new THREE.SphereGeometry(rHueco, 24, 24);
 
     // ── Posicionado de geometrías (antes de crear los Brush) ──────────────
     geoGema.rotateX(Math.PI / 2);
-    // Ahora el eje de simetría de la gema apunta en Z, igual que la extrusión.
-    // La dejamos centrada en Z=0 (ya lo está tras la rotación).
-
-    // El hueco: mismo centro que la gema
-    // geoHueco ya está centrado en el origen, no necesita transformación.
 
     // ── Brushes ───────────────────────────────────────────────────────────
     var brushCuerpo = new CSG.Brush(geoCuerpo, this.materialLlave);

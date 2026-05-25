@@ -33,16 +33,16 @@ class Daga extends THREE.Object3D {
     // MANGO:
     this.materialMango = new THREE.MeshStandardMaterial({
       color: '#3A2A1A',
-      metalness: 0.0,    // la madera no es metal
-      roughness: 0.85,   // muy rugoso → aspecto de madera
+      metalness: 0.0,
+      roughness: 0.85,
       envMapIntensity: 0.3
     });
  
     // CUERDA:
     this.materialCuerda = new THREE.MeshPhysicalMaterial({
       color: '#B89040',
-      sheen: 1.0,          // brillo de tela/hilo
-      sheenColor: '#FFD080',   // color del brillo satinado
+      sheen: 1.0,
+      sheenColor: '#FFD080',
       roughness: 0.6,
       metalness: 0.0,
     });
@@ -134,13 +134,6 @@ class Daga extends THREE.Object3D {
 
     
     //Caras:
-    //   Base hexagonal   → 4 triángulos (abanico desde v0)
-    //   Lomo  (v0→v1→P) → 1 triángulo
-    //   Canto derecho    (v1→v2→P) → 1 triángulo
-    //   Filo  (v2→v3→P) → 1 triángulo  ← el filo real (más largo)
-    //   Filo  (v3→v4→P) → 1 triángulo
-    //   Canto izquierdo  (v4→v5→P) → 1 triángulo
-    //   Lomo  (v5→v0→P) → 1 triángulo
     var indices = [
       // Base hexagonal: 4 triángulos en abanico desde v0
       0, 2, 1,
@@ -177,15 +170,13 @@ class Daga extends THREE.Object3D {
   // ── MANGO (primitiva) ────────────────────────────────────────────────────
   // Cilindro ligeramente octogonal para dar aspecto de madera trabajada.
   createGeoMango(dims) {
-    // CylinderGeometry: radioSup, radioInf, altura, segmentos
-    // 8 segmentos → sección octogonal, aspecto de madera tallada
     var geo = new THREE.CylinderGeometry(
       dims.mangoAncho / 2,
-      dims.mangoAncho / 2 * 1.1,   // ligeramente más ancho en la base
+      dims.mangoAncho / 2 * 1.1,
       dims.mangoAlto,
       8, 1
     );
-    // Centrado en y = 0; la base queda en y = -mangoAlto/2
+
     return new THREE.Mesh(geo, this.materialMango);
   }
 
@@ -193,38 +184,25 @@ class Daga extends THREE.Object3D {
   // Esfera achatada en el extremo inferior del mango.
   createGeoPomo(dims) {
     var geo = new THREE.SphereGeometry(dims.pomoRadio, 12, 12);
-    // Achatamos en Y para que parezca un pomo de daga, no una bola
     geo.scale(1, 0.65, 1);
     return new THREE.Mesh(geo, this.materialGuarda);
   }
 
   // ── CUERDA ENROLLADA (barrido) ───────────────────────────────────────────
-  //
-  // Para el barrido se usa ExtrudeGeometry con:
-  //   · shape:       sección transversal de la cuerda (círculo pequeño)
-  //   · extrudePath: CatmullRomCurve3 que describe la trayectoria
-  //
-  // El radio de la hélice = radio del mango + radio de la cuerda
-  // para que la cuerda apoye en la superficie del mango.
-  //
-  // ──────────────────────────────────────────────────────────────────────────
   createCuerda(dims) {
     var rMango = dims.mangoAncho / 2;
     var rCuerda = dims.cuerdaRadio;
     var vueltas = dims.cuerdaVueltas;
     var hMango = dims.mangoAlto;
 
-    // ── Sección de la cuerda: círculo pequeño (Shape) ──────────────────
-    // absarc completo en sentido antihorario, centrado en el origen del Shape.
-    // El origen del Shape coincide con cada punto de la trayectoria.
+    // ── Sección de la cuerda
     var seccion = new THREE.Shape();
     seccion.absarc(0, 0, rCuerda, 0, Math.PI * 2, false);
 
-    // ── Trayectoria: hélice generada proceduralmente ───────────────────
-    // N puntos distribuidos a lo largo de las vueltas
-    var N      = vueltas * 24;   // 24 puntos por vuelta → curva suave
+    // ── Trayectoria
+    var N      = vueltas * 24;   // 24 puntos por vuelta
     var rHelix = rMango + rCuerda * 0.5;   // la cuerda se apoya en el mango
-    // La cuerda empieza en la base del mango y sube hasta casi la guarda
+
     var yInicio = -hMango / 2 + rCuerda;
     var yFin    =  hMango / 2 - rCuerda;
     var altura  = yFin - yInicio;
@@ -238,12 +216,10 @@ class Daga extends THREE.Object3D {
       pts.push(new THREE.Vector3(x, y, z));
     }
 
-    // CatmullRomCurve3: curva suave que pasa por todos los puntos de la hélice
+    // CatmullRomCurve3
     var helice = new THREE.CatmullRomCurve3(pts);
 
-    // ── ExtrudeGeometry con extrudePath ────────────────────────────────
-    // steps alto para que la sección siga bien la curvatura de la hélice
-    // (el PDF advierte de poner un valor alto cuando el camino es curvo)
+    // ── ExtrudeGeometry con extrudePath
     var options = {
       steps: N,
       curveSegments: 8,
@@ -256,18 +232,6 @@ class Daga extends THREE.Object3D {
   }
 
   // ── ENSAMBLAJE COMPLETO CON CSG ──────────────────────────────────────────
-  //
-  // Cada pieza se posiciona con translate/rotateX sobre su geometría
-  // ANTES de entrar en el CSG
-  //
-  // Layout en Y (de arriba a abajo):
-  //
-  //   punta de la hoja          y = dims.hojaAlto
-  //   base de la hoja / guarda  y = 0   ← origen del ensamblaje
-  //   centro del mango          y = -dims.mangoAlto/2 - dims.guardaAlto/2
-  //   base del mango / pomo     y = -(dims.mangoAlto + dims.guardaAlto)
-  //
-  // ──────────────────────────────────────────────────────────────────────────
   createDaga(dims) {
     var yGuarda = -dims.guardaAlto / 2;
     var yMango  = yGuarda - dims.guardaAlto / 2 - dims.mangoAlto / 2;

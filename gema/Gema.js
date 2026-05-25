@@ -18,7 +18,7 @@ class Gema extends THREE.Object3D {
     texColor.wrapT = THREE.RepeatWrapping;
     texColor.repeat.set(2, 2);
 
-    var texNormal = loader.load('../imgs/gema_normal.jpg');  // ← añadir esto
+    var texNormal = loader.load('../imgs/gema_normal.jpg');
     texNormal.wrapS = THREE.RepeatWrapping;
     texNormal.wrapT = THREE.RepeatWrapping;
     texNormal.repeat.set(2, 2);
@@ -70,7 +70,6 @@ class Gema extends THREE.Object3D {
 
     this.add(this.createCristalCentral());
     this.add(this.createCristalesSecundarios());
-    // this.add(this.createBase()); // hacer cambios, algo por revolución?
   }
 
   createGUI(gui, titleGui) {
@@ -202,7 +201,7 @@ class Gema extends THREE.Object3D {
       
       this.luzInterna.intensity = baseIntensidad + variacion;
   
-      // Opcional: Que el brillo del material también parpadee con la luz
+      // El brillo del material también parpadee con la luz
       this.matGemaPrincipal.emissiveIntensity = (baseIntensidad + variacion) * 0.2;
   }
 }
