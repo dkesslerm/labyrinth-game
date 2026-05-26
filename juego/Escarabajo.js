@@ -4,6 +4,7 @@ class Escarabajo extends THREE.Object3D {
   constructor(gui, titleGui) {
     super();
 
+    // Materiales 
     this.matOro = new THREE.MeshStandardMaterial({
       color: 0xD4A017,
       metalness: 0.90,
@@ -11,11 +12,11 @@ class Escarabajo extends THREE.Object3D {
     });
 
     this.matLapis = new THREE.MeshStandardMaterial({
-      color: 0x1A7A40,   // verde escarabajo oscuro
-      metalness: 0.85,       // muy metálico → reflejo iridiscente
-      roughness: 0.15,       // muy pulido → brillo intenso
-      clearcoat: 1.0,        // capa de barniz encima → efecto quitina
-      clearcoatRoughness: 0.05,       // barniz casi espejo
+      color: 0x1A7A40,
+      metalness: 0.85,
+      roughness: 0.15,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.05,
       reflectivity: 1.0,
       side: THREE.DoubleSide,
     });
@@ -133,6 +134,7 @@ class Escarabajo extends THREE.Object3D {
     return mesh;
   }
 
+  // Para crear los élitros
   createElitroMesh(d, lado) {
     const pivoteAla = new THREE.Object3D();
 
@@ -173,6 +175,7 @@ class Escarabajo extends THREE.Object3D {
     return pivoteAla;
   }
 
+  // Creamos el cuerpo
   createCuerpo(d) {
     const grupo = new THREE.Object3D();
   
@@ -191,6 +194,7 @@ class Escarabajo extends THREE.Object3D {
     return grupo;
   }
 
+  // Creamos un ojo (según el parámetro lado)
   createOjo(d, lado) {
     const grupo = new THREE.Object3D();
  
@@ -247,6 +251,7 @@ class Escarabajo extends THREE.Object3D {
     return grupo;
   }
 
+  // Creamos un colmillo (dependiendo del lado)
   createColmillo(d, lado) {
     const zBase = d.cabezaRZ * 0.72;
     const yBase = -d.cabezaRY * 0.18;
@@ -278,6 +283,7 @@ class Escarabajo extends THREE.Object3D {
     return pivote;
   }
 
+  // Creamos la cabeza (con los ojos y los colmillos)
   createCabeza(d) {
     const grupo = new THREE.Object3D();
 
@@ -298,6 +304,7 @@ class Escarabajo extends THREE.Object3D {
     return grupo;
   }
 
+  // Creamos una pata (dependiendo del lado y de si es delantera, trasera o media)
   createPata(d, lado, tipo) {
     const pivoteCadera = new THREE.Object3D();
 
@@ -344,6 +351,7 @@ class Escarabajo extends THREE.Object3D {
     return { pivoteCadera, pivoteRodilla };
   }
 
+  // Lo juntamos todo: cuerpo, cabeza y patas
   createEscarabajo() {
     const d = this.getDims();
     const grupo = new THREE.Object3D();
@@ -402,6 +410,7 @@ class Escarabajo extends THREE.Object3D {
     return grupo;
   }
 
+  // Todo lo relativo a las animaciones
   update() {
     if (!this.animaciones) return;
 
