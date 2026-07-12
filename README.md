@@ -127,7 +127,6 @@ Click the canvas to lock the mouse pointer and start playing. Press `Esc` to rel
 
 **David Kessler Martínez**
 Double Degree in Computer Science and Mathematics — Universidad de Granada
-🔗 [github.com/dkesslerm](https://github.com/dkesslerm)
 
 **Álvaro Javier Ramos Jiménez**
 Double Degree in Computer Science and Mathematics — Universidad de Granada
