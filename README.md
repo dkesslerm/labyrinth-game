@@ -117,7 +117,7 @@ Click the canvas to lock the mouse pointer and start playing. Press `Esc` to rel
 
 ## Academic Context & Disclaimer
 
-- This project was completed for the **Sistemas Gráficos** course (Grado en Ingeniería Informática, Universidad de Granada).
+- This project was completed for the **Sistemas Gráficos** course (Double Degree in Computer Science and Mathematics, Universidad de Granada).
 - The **base scaffolding** (`MyScene`/renderer boilerplate) and the **library set** under `libs/` were provided by the course teaching staff.
 - The **maze design, gameplay, artifacts, animations, collision and interaction systems, minimap, materials, and all game logic** are original student work, unless otherwise stated.
 
